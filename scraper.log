@@ -1,0 +1,64 @@
+2025-07-30 14:02:18,311 - __main__ - INFO - Running SeattleTimesScraper...
+2025-07-30 14:02:18,451 - __main__ - INFO - SeattleTimesScraper returned 0 articles
+2025-07-30 14:02:20,452 - __main__ - INFO - Running StrangerScraper...
+2025-07-30 14:02:21,857 - __main__ - INFO - StrangerScraper returned 0 articles
+2025-07-30 14:02:23,858 - __main__ - INFO - Running CHSScraper...
+2025-07-30 14:02:24,192 - __main__ - INFO - CHSScraper returned 0 articles
+2025-07-30 14:02:26,192 - __main__ - INFO - Running RSSFeedScraper...
+2025-07-30 14:02:26,668 - __main__ - INFO - RSSFeedScraper returned 0 articles
+2025-07-30 14:02:28,669 - __main__ - WARNING - No articles found
+2025-07-30 14:04:15,261 - SeattleTimesScraper - INFO - Found 0 total links on https://www.seattletimes.com/seattle-news/
+2025-07-30 14:04:15,268 - SeattleTimesScraper - INFO - Found 0 potential article links
+2025-07-30 14:05:34,884 - __main__ - INFO - Running SeattleTimesScraper...
+2025-07-30 14:05:35,034 - SeattleTimesScraper - INFO - Found 0 total links on https://www.seattletimes.com/seattle-news/
+2025-07-30 14:05:35,034 - SeattleTimesScraper - INFO - Found 0 potential article links
+2025-07-30 14:05:35,051 - SeattleTimesScraper - INFO - Found 0 total links on https://www.seattletimes.com/politics/
+2025-07-30 14:05:35,052 - SeattleTimesScraper - INFO - Found 0 potential article links
+2025-07-30 14:05:35,052 - __main__ - INFO - SeattleTimesScraper returned 0 articles
+2025-07-30 14:05:37,054 - __main__ - INFO - Running StrangerScraper...
+2025-07-30 14:05:37,812 - StrangerScraper - INFO - Found 58 links on Stranger search page
+2025-07-30 14:05:37,812 - StrangerScraper - INFO - Found 0 Stranger article links
+2025-07-30 14:05:37,813 - __main__ - INFO - StrangerScraper returned 0 articles
+2025-07-30 14:05:39,814 - __main__ - INFO - Running CHSScraper...
+2025-07-30 14:05:40,160 - CHSScraper - INFO - Found 163 links on CHS search page
+2025-07-30 14:05:40,161 - CHSScraper - INFO - Found 70 CHS article links
+2025-07-30 14:05:45,502 - CHSScraper - ERROR - Failed to extract from https://www.capitolhillseattle.com/2025/07/mayor-touts-seattle-police-recruitment-moving-past-100-new-hires-so-far-in-2025/?share=facebook: 400 Client Error: Bad Request for url: https://www.facebook.com/sharer.php?u=https%3A%2F%2Fwww.capitolhillseattle.com%2F2025%2F07%2Fmayor-touts-seattle-police-recruitment-moving-past-100-new-hires-so-far-in-2025%2F&t=Mayor%20touts%20Seattle%20Police%20recruitment%20moving%20past%20100%20new%20hires%20so%20far%20in%202025
+2025-07-30 14:05:46,505 - __main__ - INFO - CHSScraper returned 4 articles
+2025-07-30 14:05:48,506 - __main__ - INFO - Running RSSFeedScraper...
+2025-07-30 14:05:48,968 - __main__ - INFO - RSSFeedScraper returned 0 articles
+2025-07-30 14:05:50,982 - __main__ - INFO - Saved 4 articles to seattle_news_20250730_140550.csv
+2025-07-30 14:06:54,444 - __main__ - INFO - Running SeattleTimesScraper...
+2025-07-30 14:06:54,736 - SeattleTimesScraper - INFO - Found 0 total links on https://www.seattletimes.com/seattle-news/
+2025-07-30 14:06:54,737 - SeattleTimesScraper - INFO - Found 0 potential article links
+2025-07-30 14:06:54,757 - SeattleTimesScraper - INFO - Found 0 total links on https://www.seattletimes.com/politics/
+2025-07-30 14:06:54,758 - SeattleTimesScraper - INFO - Found 0 potential article links
+2025-07-30 14:06:54,758 - __main__ - INFO - SeattleTimesScraper returned 0 articles
+2025-07-30 14:06:56,758 - __main__ - INFO - Running StrangerScraper...
+2025-07-30 14:06:57,648 - StrangerScraper - INFO - Found 58 links on Stranger search page
+2025-07-30 14:06:57,648 - StrangerScraper - INFO - Found 0 Stranger article links
+2025-07-30 14:06:57,648 - __main__ - INFO - StrangerScraper returned 0 articles
+2025-07-30 14:06:59,650 - __main__ - INFO - Running CHSScraper...
+2025-07-30 14:07:00,148 - CHSScraper - INFO - Found 163 links on CHS search page
+2025-07-30 14:07:00,148 - CHSScraper - INFO - Found 50 CHS article links
+2025-07-30 14:07:06,557 - __main__ - INFO - CHSScraper returned 5 articles
+2025-07-30 14:07:08,559 - __main__ - INFO - Running RSSFeedScraper...
+2025-07-30 14:07:09,020 - __main__ - INFO - RSSFeedScraper returned 0 articles
+2025-07-30 14:07:11,026 - __main__ - INFO - Saved 5 articles to seattle_news_20250730_140711.csv
+2025-07-30 14:11:36,763 - __main__ - INFO - Running SeattleTimesScraper...
+2025-07-30 14:11:36,902 - SeattleTimesScraper - WARNING - Got status 202 from https://www.seattletimes.com/seattle-news/
+2025-07-30 14:11:36,924 - SeattleTimesScraper - WARNING - Got status 202 from https://www.seattletimes.com/politics/
+2025-07-30 14:11:36,925 - __main__ - INFO - SeattleTimesScraper returned 0 articles
+2025-07-30 14:11:38,926 - __main__ - INFO - Running SimpleSeattleTimesScraper...
+2025-07-30 14:11:39,073 - __main__ - INFO - SimpleSeattleTimesScraper returned 0 articles
+2025-07-30 14:11:41,074 - __main__ - INFO - Running StrangerScraper...
+2025-07-30 14:11:42,820 - StrangerScraper - INFO - Found 58 links on Stranger search page
+2025-07-30 14:11:42,820 - StrangerScraper - INFO - Found 0 Stranger article links
+2025-07-30 14:11:42,820 - __main__ - INFO - StrangerScraper returned 0 articles
+2025-07-30 14:11:44,821 - __main__ - INFO - Running CHSScraper...
+2025-07-30 14:11:45,161 - CHSScraper - INFO - Found 163 links on CHS search page
+2025-07-30 14:11:45,161 - CHSScraper - INFO - Found 10 CHS article links
+2025-07-30 14:12:00,389 - __main__ - INFO - CHSScraper returned 5 articles
+2025-07-30 14:12:02,390 - __main__ - INFO - Running RSSFeedScraper...
+2025-07-30 14:12:03,331 - __main__ - INFO - RSSFeedScraper returned 2 articles
+2025-07-30 14:12:05,340 - __main__ - INFO - Removed 0 duplicates
+2025-07-30 14:12:05,347 - __main__ - INFO - Saved 7 articles to seattle_news_20250730_141205.csv

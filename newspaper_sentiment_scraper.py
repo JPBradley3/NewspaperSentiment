@@ -4,98 +4,475 @@ import feedparser
 import pandas as pd
 import time
 from urllib.parse import urljoin, urlparse
+from dataclasses import dataclass
+from typing import List, Dict, Optional
+import json
+import logging
+from functools import wraps
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from datetime import datetime
+import re
+from abc import ABC, abstractmethod
 
-# Enable more verbose debugging
-DEBUG = True
+# Configuration Management
+@dataclass
+class ScrapingConfig:
+    max_pages: int = 1
+    max_articles_per_source: int = 5
+    request_timeout: int = 10
+    delay_between_requests: float = 1.0
+    delay_between_sources: float = 2.0
+    min_content_length: int = 100
+    max_content_length: int = 1000
 
-def debug_print(message):
-    if DEBUG:
-        print(f"DEBUG: {message}")
-
-def collect_all(keyword="mayor", max_pages=1):
-    all_results = []
-    print("Scraping Seattle Times ...")
-    st_results = scrape_seattle_times(query=keyword, max_pages=max_pages)
-    debug_print(f"Seattle Times returned {len(st_results)} articles")
-    all_results.extend(st_results)
-    
-    print("Scraping RSS feeds ...")
-    for rss_url, source_name in RSS_FEEDS:
-        rss_results = scrape_rss(rss_url, source_name, keyword)
-        debug_print(f"{source_name} RSS returned {len(rss_results)} articles")
-        all_results.extend(rss_results)
-    
-    print("Scraping The Stranger ...")
-    stranger_results = scrape_stranger(query=keyword)
-    debug_print(f"The Stranger returned {len(stranger_results)} articles")
-    all_results.extend(stranger_results)
-    
-    print("Scraping Capitol Hill Seattle Blog ...")
-    chs_results = scrape_chs(query=keyword, max_pages=max_pages)
-    debug_print(f"CHS returned {len(chs_results)} articles")
-    all_results.extend(chs_results)
-    
-    return all_results
-
-def extract_article_bs4(url, title_selector, content_selector, date_selector=None):
+def load_config(config_file: str = "scraping_config.json") -> ScrapingConfig:
     try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        resp = requests.get(url, timeout=10, headers=headers)
-        debug_print(f"Status code for {url}: {resp.status_code}")
-        
-        if resp.status_code != 200:
-            return None, None, None
-            
-        soup = BeautifulSoup(resp.text, "html.parser")
-        
-        # Try multiple title selectors
-        title = None
-        title_selectors = [title_selector, 'h1', '.headline', '.entry-title', 'title']
-        for selector in title_selectors:
-            title_elem = soup.select_one(selector)
-            if title_elem:
-                title = title_elem.get_text().strip()
-                debug_print(f"Found title with selector '{selector}': {title[:50]}...")
-                break
-        
-        # Try multiple content selectors
-        content = ""
-        content_selectors = [content_selector, 'article p', '.article-body p', '.entry-content p', 'p']
-        for selector in content_selectors:
-            paragraphs = soup.select(selector)
-            if paragraphs:
-                content = ' '.join([p.get_text().strip() for p in paragraphs])
-                debug_print(f"Found content with selector '{selector}': {len(content)} characters")
-                break
-        
-        publish_date = None
-        if date_selector:
-            date_elem = soup.select_one(date_selector)
-            if date_elem:
-                publish_date = date_elem.get('content') or date_elem.get_text().strip()
-        
-        return title, content, publish_date
-    except Exception as e:
-        debug_print(f"Failed to parse {url} : {e}")
-        return None, None, None
+        with open(config_file, 'r') as f:
+            config_data = json.load(f)
+        return ScrapingConfig(**config_data)
+    except FileNotFoundError:
+        return ScrapingConfig()  # Use defaults
 
-# Keywords for relevance filtering
-RELEVANCE_KEYWORDS = [
-    "mayor", "city council", "seattle politics", "election", "candidate",
-    "municipal", "governance", "policy", "budget", "housing", "homeless",
-    "transportation", "zoning", "development", "public safety", "police",
-    "fire department", "parks", "infrastructure", "taxes", "referendum"
-]
+# Enhanced Logging Setup
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('scraper.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
-def check_relevance(title, content, keywords=RELEVANCE_KEYWORDS):
-    """Check if article is relevant based on keyword matches"""
+# Error Handling Decorator
+def retry_on_failure(max_retries=3, backoff_factor=1):
+    """Decorator for retrying failed operations"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        logger.error(f"Failed after {max_retries} attempts: {e}")
+                        raise
+                    logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying...")
+                    time.sleep(backoff_factor * (2 ** attempt))
+            return None
+        return wrapper
+    return decorator
+
+def create_session(config: ScrapingConfig) -> requests.Session:
+    """Create a robust requests session"""
+    session = requests.Session()
+    
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+    )
+    
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    })
+    
+    return session
+
+# Enhanced Keywords with Weighting
+RELEVANCE_KEYWORDS = {
+    "high": [
+        "mayor", "mayoral", "city council", "councilmember", "councilwoman", "councilman",
+        "seattle politics", "election", "candidate", "municipal", "governance"
+    ],
+    "medium": [
+        "budget", "housing", "homeless", "homelessness", "transportation", "zoning", 
+        "public safety", "police", "SPD", "infrastructure", "taxes"
+    ],
+    "low": [
+        "policy", "development", "parks", "fire department", "referendum",
+        "ordinance", "legislation", "ballot measure"
+    ]
+}
+
+def check_relevance_weighted(title: str, content: str) -> tuple[bool, List[str], float]:
+    """Enhanced relevance checking with weighted scoring"""
     text = (title + " " + content).lower()
-    matches = [kw for kw in keywords if kw.lower() in text]
-    return len(matches) >= 1, matches
+    
+    score = 0
+    matches = []
+    weights = {"high": 3, "medium": 2, "low": 1}
+    
+    for weight_level, keywords in RELEVANCE_KEYWORDS.items():
+        for keyword in keywords:
+            # Use word boundaries to avoid partial matches
+            pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
+            if re.search(pattern, text):
+                matches.append(keyword)
+                score += weights[weight_level]
+    
+    # Title matches get bonus points
+    title_lower = title.lower()
+    for weight_level, keywords in RELEVANCE_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword.lower() in title_lower:
+                matches.append(f"{keyword} (title)")
+                score += weights[weight_level] * 0.5  # 50% bonus for title matches
+    
+    # Lower threshold to catch more articles initially
+    is_relevant = score >= 1 or len(matches) > 0
+    return is_relevant, matches, score
 
-def get_wayback_url(original_url):
+# Data Validation Classes
+class ArticleValidator:
+    @staticmethod
+    def is_valid_url(url: str) -> bool:
+        try:
+            result = urlparse(url)
+            return all([result.scheme, result.netloc])
+        except:
+            return False
+    
+    @staticmethod
+    def clean_text(text: str) -> str:
+        if not text:
+            return ""
+        # Remove extra whitespace, normalize
+        text = re.sub(r'\s+', ' ', text.strip())
+        # Remove common artifacts
+        text = re.sub(r'Advertisement\s*', '', text, flags=re.IGNORECASE)
+        return text
+    
+    @staticmethod
+    def normalize_date(date_str: str) -> Optional[str]:
+        if not date_str:
+            return None
+        
+        # Add date parsing logic for common formats
+        date_patterns = [
+            r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}',  # ISO format
+            r'\d{4}-\d{2}-\d{2}',  # Simple date
+        ]
+        
+        for pattern in date_patterns:
+            if re.search(pattern, date_str):
+                return date_str
+        
+        return date_str  # Return as-is if no pattern matches
+
+def process_article_data(raw_data: Dict) -> Optional[Dict]:
+    """Clean and validate article data"""
+    validator = ArticleValidator()
+    
+    # Validate required fields
+    if not all(key in raw_data for key in ['url', 'title', 'content']):
+        logger.warning("Missing required fields in article data")
+        return None
+    
+    if not validator.is_valid_url(raw_data['url']):
+        logger.warning(f"Invalid URL: {raw_data['url']}")
+        return None
+    
+    processed = {
+        'url': raw_data['url'],
+        'source': raw_data.get('source', 'Unknown'),
+        'title': validator.clean_text(raw_data['title']),
+        'content': validator.clean_text(raw_data['content']),
+        'publish_date': validator.normalize_date(raw_data.get('publish_date')),
+        'matched_keywords': raw_data.get('matched_keywords', []),
+        'relevance_score': raw_data.get('relevance_score', 0),
+        'scraped_at': datetime.now().isoformat(),
+        'content_length': len(raw_data.get('content', ''))
+    }
+    
+    return processed
+
+# Base Scraper Class
+class BaseScraper(ABC):
+    def __init__(self, config: ScrapingConfig, session: requests.Session):
+        self.config = config
+        self.session = session
+        self.logger = logging.getLogger(self.__class__.__name__)
+    
+    @abstractmethod
+    def scrape(self, query: str) -> List[Dict]:
+        pass
+    
+    def extract_article_content(self, url: str, selectors: Dict[str, List[str]]) -> Optional[Dict]:
+        """Generic article extraction method"""
+        try:
+            response = self.session.get(url, timeout=self.config.request_timeout)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, "html.parser")
+            
+            # Extract using multiple selector fallbacks
+            title = self._extract_with_fallback(soup, selectors.get('title', []))
+            content = self._extract_with_fallback(soup, selectors.get('content', []))
+            date = self._extract_with_fallback(soup, selectors.get('date', []))
+            
+            self.logger.debug(f"Extracted from {url}: title={len(title)} chars, content={len(content)} chars")
+            
+            if not title and not content:
+                self.logger.warning(f"No content extracted from {url}")
+                return None
+            
+            return {
+                'title': title or 'No title',
+                'content': content or title,
+                'publish_date': date
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Failed to extract from {url}: {e}")
+            return None
+    
+    def _extract_with_fallback(self, soup: BeautifulSoup, selectors: List[str]) -> str:
+        """Try multiple selectors until one works"""
+        for selector in selectors:
+            try:
+                elements = soup.select(selector)
+                if elements:
+                    if selector.startswith('meta'):
+                        return elements[0].get('content', '')
+                    else:
+                        return ' '.join([elem.get_text().strip() for elem in elements])
+            except:
+                continue
+        return ""
+    
+    def _is_relevant(self, article_data: Dict) -> bool:
+        """Check if article is relevant using weighted scoring"""
+        is_relevant, matches, score = check_relevance_weighted(
+            article_data.get('title', ''), 
+            article_data.get('content', '')
+        )
+        article_data['matched_keywords'] = matches
+        article_data['relevance_score'] = score
+        
+        self.logger.debug(f"Relevance check: score={score}, matches={matches}, relevant={is_relevant}")
+        return is_relevant
+
+# Specific Scraper Implementations
+class SeattleTimesScraper(BaseScraper):
+    def scrape(self, query: str) -> List[Dict]:
+        results = []
+        base_urls = [
+            "https://www.seattletimes.com/seattle-news/",
+            "https://www.seattletimes.com/politics/"
+        ]
+        
+        selectors = {
+            'title': ['h1', '.headline', '.entry-title'],
+            'content': ['article p', '.article-body p', 'p'],
+            'date': ['meta[property="article:published_time"]', 'time']
+        }
+        
+        for base_url in base_urls:
+            try:
+                article_urls = self._find_article_urls(base_url)
+                
+                for url in article_urls[:self.config.max_articles_per_source]:
+                    article_data = self.extract_article_content(url, selectors)
+                    if article_data and self._is_relevant(article_data):
+                        article_data['url'] = url
+                        article_data['source'] = 'Seattle Times'
+                        results.append(article_data)
+                    
+                    time.sleep(self.config.delay_between_requests)
+                    
+            except Exception as e:
+                self.logger.error(f"Error scraping {base_url}: {e}")
+        
+        return results
+    
+    def _find_article_urls(self, base_url: str) -> List[str]:
+        try:
+            response = self.session.get(base_url, timeout=self.config.request_timeout)
+            if response.status_code != 200:
+                self.logger.warning(f"Got status {response.status_code} from {base_url}")
+                return []
+            
+            soup = BeautifulSoup(response.text, "html.parser")
+            
+            article_links = set()  # Use set to avoid duplicates
+            all_links = soup.find_all('a', href=True)
+            self.logger.info(f"Found {len(all_links)} total links on {base_url}")
+            
+            for a in all_links:
+                href = a['href']
+                if href.startswith('/'):
+                    href = "https://www.seattletimes.com" + href
+                
+                # More flexible matching - look for article patterns
+                if ('seattletimes.com' in href and 
+                    ('seattle-news' in href or 'politics' in href or 'local' in href) and
+                    not any(skip in href for skip in ['/feed/', '/rss', '/tag/', '/category/'])):
+                    article_links.add(href)
+            
+            self.logger.info(f"Found {len(article_links)} potential article links")
+            return list(article_links)
+        
+        except Exception as e:
+            self.logger.error(f"Error finding article URLs from {base_url}: {e}")
+            return []
+
+class StrangerScraper(BaseScraper):
+    def scrape(self, query: str) -> List[Dict]:
+        results = []
+        try:
+            search_url = f"https://www.thestranger.com/search?q={query}"
+            
+            response = self.session.get(search_url, timeout=self.config.request_timeout)
+            soup = BeautifulSoup(response.text, "html.parser")
+            
+            selectors = {
+                'title': ['h1', '.headline', '.entry-title'],
+                'content': ['article p', '.article-body p', 'p'],
+                'date': ['time', '.date']
+            }
+            
+            article_links = self._find_stranger_articles(soup)
+            
+            for url in article_links[:self.config.max_articles_per_source]:
+                article_data = self.extract_article_content(url, selectors)
+                if (article_data and 
+                    len(article_data.get('content', '')) > self.config.min_content_length and 
+                    self._is_relevant(article_data)):
+                    
+                    article_data['url'] = url
+                    article_data['source'] = 'The Stranger'
+                    results.append(article_data)
+                
+                time.sleep(self.config.delay_between_requests)
+                
+        except Exception as e:
+            self.logger.error(f"Error scraping The Stranger: {e}")
+        
+        return results
+    
+    def _find_stranger_articles(self, soup: BeautifulSoup) -> List[str]:
+        """Extract article URLs from Stranger search page"""
+        article_links = set()  # Use set to avoid duplicates
+        links = soup.find_all('a', href=True)
+        self.logger.info(f"Found {len(links)} links on Stranger search page")
+        
+        for a in links:
+            href = a['href']
+            if any(year in href for year in ['/2025/', '/2024/', '/2023/']):
+                if not href.startswith('http'):
+                    href = urljoin('https://www.thestranger.com', href)
+                if 'thestranger.com' in href and len(href.split('/')) > 4:
+                    article_links.add(href)
+        
+        self.logger.info(f"Found {len(article_links)} Stranger article links")
+        return list(article_links)
+
+class CHSScraper(BaseScraper):
+    def scrape(self, query: str) -> List[Dict]:
+        results = []
+        try:
+            search_url = f"https://www.capitolhillseattle.com/?s={query}"
+            
+            response = self.session.get(search_url, timeout=self.config.request_timeout)
+            soup = BeautifulSoup(response.text, "html.parser")
+            
+            selectors = {
+                'title': ['h1', '.entry-title', '.headline'],
+                'content': ['.entry-content p', 'article p', 'p'],
+                'date': ['time', '.date', '.published']
+            }
+            
+            article_links = self._find_chs_articles(soup)
+            
+            for url in article_links[:self.config.max_articles_per_source]:
+                article_data = self.extract_article_content(url, selectors)
+                if (article_data and 
+                    len(article_data.get('content', '')) > self.config.min_content_length and 
+                    self._is_relevant(article_data)):
+                    
+                    article_data['url'] = url
+                    article_data['source'] = 'Capitol Hill Seattle'
+                    results.append(article_data)
+                
+                time.sleep(self.config.delay_between_requests)
+                
+        except Exception as e:
+            self.logger.error(f"Error scraping CHS: {e}")
+        
+        return results
+    
+    def _find_chs_articles(self, soup: BeautifulSoup) -> List[str]:
+        """Extract article URLs from CHS search page"""
+        article_links = set()  # Use set to avoid duplicates
+        links = soup.find_all('a', href=True)
+        self.logger.info(f"Found {len(links)} links on CHS search page")
+        
+        for a in links:
+            href = a['href']
+            if ('capitolhillseattle.com' in href and 
+                any(year in href for year in ['/2025/', '/2024/', '/2023/']) and 
+                len(href.split('/')) > 4 and
+                'share=' not in href and
+                '#' not in href):  # Avoid anchor links
+                article_links.add(href)
+        
+        self.logger.info(f"Found {len(article_links)} CHS article links")
+        return list(article_links)
+
+class RSSFeedScraper(BaseScraper):
+    def __init__(self, config: ScrapingConfig, session: requests.Session):
+        super().__init__(config, session)
+        self.rss_feeds = [
+            ("https://www.kuow.org/rss", "KUOW"),
+            ("https://www.seattletimes.com/seattle-news/feed/", "Seattle Times RSS"),
+            ("https://feeds.feedburner.com/seattletimes/local", "Seattle Times Local RSS"),
+        ]
+    
+    def scrape(self, query: str) -> List[Dict]:
+        results = []
+        for rss_url, source_name in self.rss_feeds:
+            try:
+                # Add user agent for RSS feeds
+                headers = {'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'}
+                response = self.session.get(rss_url, headers=headers, timeout=self.config.request_timeout)
+                
+                if response.status_code == 200:
+                    feed = feedparser.parse(response.content)
+                else:
+                    feed = feedparser.parse(rss_url)  # Fallback to direct parsing
+                
+                print(f"DEBUG RSS {source_name}: {len(feed.entries)} entries")
+                
+                for entry in feed.entries:
+                    title = entry.get('title', '')
+                    summary = entry.get('summary', entry.get('description', ''))
+                    
+                    article_data = {
+                        'title': title,
+                        'content': summary or title,
+                        'publish_date': entry.get('published')
+                    }
+                    
+                    if self._is_relevant(article_data):
+                        article_data.update({
+                            'url': entry.get('link', ''),
+                            'source': source_name
+                        })
+                        results.append(article_data)
+                        
+            except Exception as e:
+                self.logger.error(f"Error scraping RSS {source_name}: {e}")
+        
+        return results
+
+# Wayback Machine Integration
+def get_wayback_url(original_url: str) -> Optional[str]:
     """Get archived version of URL from Internet Archive"""
     try:
         wayback_api = f"http://archive.org/wayback/available?url={original_url}"
@@ -104,225 +481,159 @@ def get_wayback_url(original_url):
         
         if data.get('archived_snapshots', {}).get('closest', {}).get('available'):
             archived_url = data['archived_snapshots']['closest']['url']
-            debug_print(f"Found archived version: {archived_url}")
+            logger.info(f"Found archived version: {archived_url}")
             return archived_url
     except Exception as e:
-        debug_print(f"Error getting wayback URL: {e}")
+        logger.warning(f"Error getting wayback URL: {e}")
     return None
 
-def scrape_seattle_times(query="mayor", max_pages=1):
-    results = []
-    try:
-        # Try the main Seattle news section and look for recent articles
-        base_urls = [
-            "https://www.seattletimes.com/seattle-news/",
-            "https://www.seattletimes.com/politics/"
-        ]
-        
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        
-        for base_url in base_urls:
-            debug_print(f"Scraping Seattle Times section: {base_url}")
-            resp = requests.get(base_url, headers=headers, timeout=10)
-            soup = BeautifulSoup(resp.text, "html.parser")
+# Alternative simple scraper for Seattle Times
+class SimpleSeattleTimesScraper(BaseScraper):
+    def scrape(self, query: str) -> List[Dict]:
+        results = []
+        try:
+            # Try direct RSS approach first
+            rss_url = "https://www.seattletimes.com/seattle-news/feed/"
+            feed = feedparser.parse(rss_url)
             
-            # Look for article links with more flexible patterns
-            article_links = []
-            all_links = soup.find_all('a', href=True)
-            debug_print(f"Total links found on page: {len(all_links)}")
-            
-            for a in all_links:
-                href = a['href']
-                # Convert relative URLs to absolute
-                if href.startswith('/'):
-                    href = "https://www.seattletimes.com" + href
+            for entry in feed.entries[:self.config.max_articles_per_source]:
+                article_data = {
+                    'title': entry.get('title', ''),
+                    'content': entry.get('summary', entry.get('description', '')),
+                    'publish_date': entry.get('published'),
+                    'url': entry.get('link', ''),
+                    'source': 'Seattle Times (RSS)'
+                }
                 
-                # Look for article patterns - be more flexible
-                if 'seattletimes.com' in href and any(x in href for x in ['/2024/', '/2023/', '/2022/', 'seattle-news', 'politics']):
-                    article_links.append(href)
-                    debug_print(f"Added article link: {href}")
-            
-            debug_print(f"Found {len(article_links)} potential article links")
-            
-            # Remove duplicates and limit
-            article_links = list(set(article_links))[:3]
-            
-            for article_url in article_links:
-                debug_print(f"Processing article: {article_url}")
+                if self._is_relevant(article_data):
+                    results.append(article_data)
+                    
+        except Exception as e:
+            self.logger.error(f"Error with simple Seattle Times scraper: {e}")
+        
+        return results
+
+# Debug function to test individual scrapers
+def test_scraper_debug():
+    """Test function to debug scraper issues"""
+    config = load_config()
+    session = create_session(config)
+    
+    # Test Seattle Times scraper
+    st_scraper = SeattleTimesScraper(config, session)
+    print("Testing Seattle Times scraper...")
+    
+    # Test URL finding
+    test_url = "https://www.seattletimes.com/seattle-news/"
+    urls = st_scraper._find_article_urls(test_url)
+    print(f"Found {len(urls)} URLs from {test_url}")
+    if urls:
+        print(f"Sample URLs: {urls[:3]}")
+        
+        # Test content extraction
+        test_article = urls[0] if urls else None
+        if test_article:
+            selectors = {
+                'title': ['h1', '.headline', '.entry-title'],
+                'content': ['article p', '.article-body p', 'p'],
+                'date': ['meta[property="article:published_time"]', 'time']
+            }
+            content = st_scraper.extract_article_content(test_article, selectors)
+            if content:
+                print(f"Sample content: title='{content['title'][:50]}...', content_len={len(content['content'])}")
                 
-                # Try archived version first
-                wayback_url = get_wayback_url(article_url)
-                url_to_scrape = wayback_url if wayback_url else article_url
-                
-                title, content, date = extract_article_bs4(
-                    url_to_scrape,
-                    'h1',
-                    'p',
-                    'meta[property="article:published_time"]'
-                )
-                
-                # Check relevance using keyword list
-                if title and content:
-                    is_relevant, matched_keywords = check_relevance(title, content)
-                    if is_relevant:
-                        results.append({
-                            "url": article_url,  # Keep original URL for reference
-                            "source": "Seattle Times" + (" (Archived)" if wayback_url else ""),
-                            "title": title,
-                            "content": content[:1000] + "..." if len(content) > 1000 else content,
-                            "publish_date": date,
-                            "matched_keywords": matched_keywords
-                        })
-                time.sleep(1)
+                # Test relevance
+                is_relevant = st_scraper._is_relevant(content)
+                print(f"Is relevant: {is_relevant}")
+    
+    # Test simple Seattle Times scraper
+    print("\nTesting Simple Seattle Times scraper...")
+    simple_st = SimpleSeattleTimesScraper(config, session)
+    simple_results = simple_st.scrape("mayor")
+    print(f"Simple scraper found {len(simple_results)} articles")
+    
+    # Test RSS scraper
+    print("\nTesting RSS scraper...")
+    rss_scraper = RSSFeedScraper(config, session)
+    rss_results = rss_scraper.scrape("mayor")
+    print(f"RSS scraper found {len(rss_results)} articles")
+    if rss_results:
+        sample = rss_results[0]
+        print(f"Sample RSS: {sample['title'][:50]}...")
+
+# Main Execution Function
+def main():
+    config = load_config()
+    session = create_session(config)
+    
+    # Initialize scrapers - add simple Seattle Times as backup
+    scrapers = [
+        SeattleTimesScraper(config, session),
+        SimpleSeattleTimesScraper(config, session),
+        StrangerScraper(config, session),
+        CHSScraper(config, session),
+        RSSFeedScraper(config, session)
+    ]
+    
+    all_results = []
+    
+    for scraper in scrapers:
+        try:
+            logger.info(f"Running {scraper.__class__.__name__}...")
+            results = scraper.scrape("mayor")
             
-            time.sleep(2)
+            # Process and validate results
+            processed_results = []
+            for result in results:
+                processed = process_article_data(result)
+                if processed:
+                    processed_results.append(processed)
             
-    except Exception as e:
-        debug_print(f"Error scraping Seattle Times: {e}")
-    
-    debug_print(f"Seattle Times returned {len(results)} articles")
-    return results
-
-def scrape_rss(rss_url, source_name, keyword):
-    results = []
-    try:
-        debug_print(f"Parsing RSS feed: {rss_url}")
-        feed = feedparser.parse(rss_url)
-        debug_print(f"RSS feed has {len(feed.entries)} entries")
-        
-        for entry in feed.entries:
-            title = entry.get('title', '')
-            summary = entry.get('summary', '')
-            snippet = title + ' ' + summary
+            all_results.extend(processed_results)
+            logger.info(f"{scraper.__class__.__name__} returned {len(processed_results)} articles")
             
-            if keyword.lower() in snippet.lower():
-                debug_print(f"Found matching entry: {title[:50]}...")
-                url = entry.link
-                
-                # For RSS, we might just use the summary if full content isn't available
-                results.append({
-                    "url": url,
-                    "source": source_name,
-                    "title": title,
-                    "content": summary or title,
-                    "publish_date": entry.get('published')
-                })
-    except Exception as e:
-        debug_print(f"Error scraping RSS {source_name}: {e}")
+            time.sleep(config.delay_between_sources)
+            
+        except Exception as e:
+            logger.error(f"Error with {scraper.__class__.__name__}: {e}")
     
-    return results
-
-# Updated RSS feeds (some might not work)
-RSS_FEEDS = [
-    ("https://www.kuow.org/rss.xml", "KUOW"),
-    ("https://www.seattletimes.com/rss/", "Seattle Times RSS"),
-]
-
-def scrape_stranger(query="mayor"):
-    results = []
-    try:
-        search_url = f"https://www.thestranger.com/search?q={query}"
-        debug_print(f"Searching The Stranger: {search_url}")
-        
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        resp = requests.get(search_url, headers=headers, timeout=10)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        
-        # Look for article links
-        links = soup.find_all('a', href=True)
-        debug_print(f"Found {len(links)} total links on Stranger search page")
-        
-        article_links = []
-        for a in links:
-            href = a['href']
-            if '/2024/' in href or '/2023/' in href:  # Look for recent articles
-                if not href.startswith('http'):
-                    href = urljoin('https://www.thestranger.com', href)
-                article_links.append(href)
-        
-        debug_print(f"Found {len(article_links)} potential article links")
-        
-        for article_url in article_links[:3]:  # Limit to avoid overloading
-            title, content, date = extract_article_bs4(
-                article_url, 'h1', 'p')
-            if title and content and len(content) > 100:
-                is_relevant, matched_keywords = check_relevance(title, content)
-                if is_relevant:
-                    results.append({
-                        "url": article_url,
-                        "source": "The Stranger",
-                        "title": title,
-                        "content": content[:1000] + "..." if len(content) > 1000 else content,
-                        "publish_date": date,
-                        "matched_keywords": matched_keywords
-                    })
-            time.sleep(1)
-    except Exception as e:
-        debug_print(f"Error scraping The Stranger: {e}")
-    
-    return results
-
-def scrape_chs(query="mayor", max_pages=1):
-    results = []
-    try:
-        # Try the search URL format
-        search_url = f"https://www.capitolhillseattle.com/?s={query}"
-        debug_print(f"Searching CHS: {search_url}")
-        
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        resp = requests.get(search_url, headers=headers, timeout=10)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        
-        # Look for article links
-        links = soup.find_all('a', href=True)
-        article_links = []
-        
-        for a in links:
-            href = a['href']
-            if 'capitolhillseattle.com' in href and ('/2024/' in href or '/2023/' in href):
-                article_links.append(href)
-        
-        debug_print(f"Found {len(article_links)} potential CHS article links")
-        
-        for article_url in article_links[:3]:  # Limit to avoid overloading
-            title, content, date = extract_article_bs4(
-                article_url, 'h1', 'p')
-            if title and content and len(content) > 100:
-                is_relevant, matched_keywords = check_relevance(title, content)
-                if is_relevant:
-                    results.append({
-                        "url": article_url,
-                        "source": "CHS",
-                        "title": title,
-                        "content": content[:1000] + "..." if len(content) > 1000 else content,
-                        "publish_date": date,
-                        "matched_keywords": matched_keywords
-                    })
-            time.sleep(1)
-    except Exception as e:
-        debug_print(f"Error scraping CHS: {e}")
-    
-    return results
-
-if __name__ == "__main__":
-    # Test with debug enabled
-    all_results = collect_all(keyword="mayor", max_pages=1)
-    
+    # Save results with metadata
     if all_results:
         df = pd.DataFrame(all_results)
-        df.to_csv("seattle_mayoral_news.csv", index=False)
-        print(f"Saved {len(df)} articles to seattle_mayoral_news.csv")
         
-        # Print summary
-        print("\nSummary:")
-        for source in df['source'].unique():
-            count = len(df[df['source'] == source])
+        # Remove duplicates based on URL and title
+        initial_count = len(df)
+        df = df.drop_duplicates(subset=['url'], keep='first')
+        df = df.drop_duplicates(subset=['title'], keep='first')
+        logger.info(f"Removed {initial_count - len(df)} duplicates")
+        
+        # Sort by relevance score
+        df = df.sort_values('relevance_score', ascending=False)
+        
+        # Add summary statistics
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"seattle_news_{timestamp}.csv"
+        
+        df.to_csv(filename, index=False)
+        logger.info(f"Saved {len(df)} articles to {filename}")
+        
+        # Print detailed summary
+        print(f"\nScraping completed. Found {len(df)} relevant articles:")
+        source_counts = df['source'].value_counts()
+        for source, count in source_counts.items():
             print(f"  {source}: {count} articles")
+        
+        print(f"\nTop articles by relevance score:")
+        top_articles = df.head(5)
+        for idx, row in top_articles.iterrows():
+            print(f"  {row['relevance_score']:.1f} - {row['title'][:60]}... ({row['source']})")
+            
     else:
-        print("No articles found. Check the debug output above for issues.")
+        logger.warning("No articles found")
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--debug":
+        test_scraper_debug()
+    else:
+        main()
