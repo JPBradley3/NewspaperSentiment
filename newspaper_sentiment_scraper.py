@@ -19,7 +19,7 @@ from abc import ABC, abstractmethod
 @dataclass
 class ScrapingConfig:
     max_pages: int = 1
-    max_articles_per_source: int = 5
+    max_articles_per_source: int = 10
     request_timeout: int = 10
     delay_between_requests: float = 1.0
     delay_between_sources: float = 2.0
@@ -69,8 +69,8 @@ def create_session(config: ScrapingConfig) -> requests.Session:
     session = requests.Session()
     
     retry_strategy = Retry(
-        total=3,
-        backoff_factor=1,
+        total=2,
+        backoff_factor=2,
         status_forcelist=[429, 500, 502, 503, 504],
     )
     
@@ -79,7 +79,12 @@ def create_session(config: ScrapingConfig) -> requests.Session:
     session.mount("https://", adapter)
     
     session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
     })
     
     return session
@@ -204,7 +209,7 @@ class BaseScraper(ABC):
         pass
     
     def extract_article_content(self, url: str, selectors: Dict[str, List[str]]) -> Optional[Dict]:
-        """Generic article extraction method"""
+        """Generic article extraction method with Wayback fallback"""
         try:
             response = self.session.get(url, timeout=self.config.request_timeout)
             response.raise_for_status()
@@ -229,8 +234,31 @@ class BaseScraper(ABC):
             }
             
         except Exception as e:
-            self.logger.error(f"Failed to extract from {url}: {e}")
-            return None
+            self.logger.warning(f"Failed to extract from {url}: {e}. Trying Wayback Machine...")
+            return self._try_wayback_extraction(url, selectors)
+    
+    def _try_wayback_extraction(self, url: str, selectors: Dict[str, List[str]]) -> Optional[Dict]:
+        """Try extracting from Internet Archive"""
+        wayback_url = get_wayback_url(url)
+        if wayback_url:
+            try:
+                response = self.session.get(wayback_url, timeout=self.config.request_timeout)
+                soup = BeautifulSoup(response.text, "html.parser")
+                
+                title = self._extract_with_fallback(soup, selectors.get('title', []))
+                content = self._extract_with_fallback(soup, selectors.get('content', []))
+                date = self._extract_with_fallback(soup, selectors.get('date', []))
+                
+                if title or content:
+                    self.logger.info(f"Successfully extracted from Wayback: {wayback_url}")
+                    return {
+                        'title': title or 'No title',
+                        'content': content or title,
+                        'publish_date': date
+                    }
+            except Exception as e:
+                self.logger.error(f"Wayback extraction failed: {e}")
+        return None
     
     def _extract_with_fallback(self, soup: BeautifulSoup, selectors: List[str]) -> str:
         """Try multiple selectors until one works"""
@@ -293,10 +321,19 @@ class SeattleTimesScraper(BaseScraper):
     
     def _find_article_urls(self, base_url: str) -> List[str]:
         try:
-            response = self.session.get(base_url, timeout=self.config.request_timeout)
-            if response.status_code != 200:
-                self.logger.warning(f"Got status {response.status_code} from {base_url}")
-                return []
+            # Add extra headers for Seattle Times
+            headers = {
+                'Referer': 'https://www.google.com/',
+                'Cache-Control': 'no-cache'
+            }
+            response = self.session.get(base_url, timeout=self.config.request_timeout, headers=headers)
+            
+            if response.status_code == 202:
+                self.logger.info(f"Site may be rate limiting (202). Trying Wayback Machine...")
+                return self._find_wayback_urls(base_url)
+            elif response.status_code != 200:
+                self.logger.warning(f"Got status {response.status_code} from {base_url}. Trying Wayback...")
+                return self._find_wayback_urls(base_url)
             
             soup = BeautifulSoup(response.text, "html.parser")
             
@@ -309,9 +346,10 @@ class SeattleTimesScraper(BaseScraper):
                 if href.startswith('/'):
                     href = "https://www.seattletimes.com" + href
                 
-                # More flexible matching - look for article patterns
+                # More flexible matching - look for article patterns from past year
                 if ('seattletimes.com' in href and 
                     ('seattle-news' in href or 'politics' in href or 'local' in href) and
+                    any(year in href for year in ['/2025/', '/2024/']) and
                     not any(skip in href for skip in ['/feed/', '/rss', '/tag/', '/category/'])):
                     article_links.add(href)
             
@@ -321,6 +359,33 @@ class SeattleTimesScraper(BaseScraper):
         except Exception as e:
             self.logger.error(f"Error finding article URLs from {base_url}: {e}")
             return []
+    
+    def _find_wayback_urls(self, base_url: str) -> List[str]:
+        """Find article URLs from Wayback Machine"""
+        wayback_url = get_wayback_url(base_url)
+        if wayback_url:
+            try:
+                response = self.session.get(wayback_url, timeout=self.config.request_timeout)
+                soup = BeautifulSoup(response.text, "html.parser")
+                
+                article_links = set()
+                all_links = soup.find_all('a', href=True)
+                
+                for a in all_links:
+                    href = a['href']
+                    if href.startswith('/'):
+                        href = "https://www.seattletimes.com" + href
+                    
+                    if ('seattletimes.com' in href and 
+                        ('seattle-news' in href or 'politics' in href or 'local' in href) and
+                        any(year in href for year in ['/2025/', '/2024/'])):
+                        article_links.add(href)
+                
+                self.logger.info(f"Found {len(article_links)} URLs from Wayback Machine")
+                return list(article_links)
+            except Exception as e:
+                self.logger.error(f"Wayback URL finding failed: {e}")
+        return []
 
 class StrangerScraper(BaseScraper):
     def scrape(self, query: str) -> List[Dict]:
@@ -364,11 +429,33 @@ class StrangerScraper(BaseScraper):
         
         for a in links:
             href = a['href']
-            if any(year in href for year in ['/2025/', '/2024/', '/2023/']):
+            if any(year in href for year in ['/2025/', '/2024/']):
                 if not href.startswith('http'):
                     href = urljoin('https://www.thestranger.com', href)
                 if 'thestranger.com' in href and len(href.split('/')) > 4:
                     article_links.add(href)
+        
+        # If no articles found, try Wayback Machine
+        if not article_links:
+            self.logger.info("No Stranger articles found, trying Wayback Machine...")
+            wayback_url = get_wayback_url(f"https://www.thestranger.com/search?q=mayor")
+            if wayback_url:
+                try:
+                    response = self.session.get(wayback_url, timeout=self.config.request_timeout)
+                    wayback_soup = BeautifulSoup(response.text, "html.parser")
+                    wayback_links = wayback_soup.find_all('a', href=True)
+                    
+                    for a in wayback_links:
+                        href = a['href']
+                        if any(year in href for year in ['/2025/', '/2024/']):
+                            if not href.startswith('http'):
+                                href = urljoin('https://www.thestranger.com', href)
+                            if 'thestranger.com' in href:
+                                article_links.add(href)
+                    
+                    self.logger.info(f"Found {len(article_links)} articles from Wayback")
+                except Exception as e:
+                    self.logger.error(f"Wayback Stranger search failed: {e}")
         
         self.logger.info(f"Found {len(article_links)} Stranger article links")
         return list(article_links)
@@ -416,7 +503,7 @@ class CHSScraper(BaseScraper):
         for a in links:
             href = a['href']
             if ('capitolhillseattle.com' in href and 
-                any(year in href for year in ['/2025/', '/2024/', '/2023/']) and 
+                any(year in href for year in ['/2025/', '/2024/']) and 
                 len(href.split('/')) > 4 and
                 'share=' not in href and
                 '#' not in href):  # Avoid anchor links
@@ -432,6 +519,9 @@ class RSSFeedScraper(BaseScraper):
             ("https://www.kuow.org/rss", "KUOW"),
             ("https://www.seattletimes.com/seattle-news/feed/", "Seattle Times RSS"),
             ("https://feeds.feedburner.com/seattletimes/local", "Seattle Times Local RSS"),
+            ("https://www.kiro7.com/news/local/feed/", "KIRO 7"),
+            ("https://www.king5.com/feeds/syndication/rss/news/local", "KING 5"),
+            ("https://komonews.com/news/local/rss.xml", "KOMO News"),
         ]
     
     def scrape(self, query: str) -> List[Dict]:
@@ -452,11 +542,16 @@ class RSSFeedScraper(BaseScraper):
                 for entry in feed.entries:
                     title = entry.get('title', '')
                     summary = entry.get('summary', entry.get('description', ''))
+                    publish_date = entry.get('published', '')
+                    
+                    # Filter for past year articles
+                    if publish_date and not any(year in publish_date for year in ['2024', '2025']):
+                        continue
                     
                     article_data = {
                         'title': title,
                         'content': summary or title,
-                        'publish_date': entry.get('published')
+                        'publish_date': publish_date
                     }
                     
                     if self._is_relevant(article_data):
@@ -471,11 +566,15 @@ class RSSFeedScraper(BaseScraper):
         
         return results
 
-# Wayback Machine Integration
-def get_wayback_url(original_url: str) -> Optional[str]:
+# Enhanced Wayback Machine Integration
+def get_wayback_url(original_url: str, timestamp: str = None) -> Optional[str]:
     """Get archived version of URL from Internet Archive"""
     try:
-        wayback_api = f"http://archive.org/wayback/available?url={original_url}"
+        if timestamp:
+            wayback_api = f"http://archive.org/wayback/available?url={original_url}&timestamp={timestamp}"
+        else:
+            wayback_api = f"http://archive.org/wayback/available?url={original_url}"
+        
         resp = requests.get(wayback_api, timeout=10)
         data = resp.json()
         
@@ -484,8 +583,25 @@ def get_wayback_url(original_url: str) -> Optional[str]:
             logger.info(f"Found archived version: {archived_url}")
             return archived_url
     except Exception as e:
-        logger.warning(f"Error getting wayback URL: {e}")
+        logger.warning(f"Error getting wayback URL for {original_url}: {e}")
     return None
+
+def get_recent_wayback_urls(base_url: str, limit: int = 5) -> List[str]:
+    """Get recent archived URLs from a base URL"""
+    try:
+        # Get URLs from the past year
+        timestamps = ['20250130', '20250101', '20241201', '20241101', '20241001', '20240901', '20240801', '20240701', '20240601', '20240501', '20240401', '20240301']
+        urls = []
+        
+        for timestamp in timestamps[:limit]:
+            wayback_url = get_wayback_url(base_url, timestamp)
+            if wayback_url:
+                urls.append(wayback_url)
+        
+        return urls
+    except Exception as e:
+        logger.warning(f"Error getting recent wayback URLs: {e}")
+        return []
 
 # Alternative simple scraper for Seattle Times
 class SimpleSeattleTimesScraper(BaseScraper):
@@ -496,17 +612,56 @@ class SimpleSeattleTimesScraper(BaseScraper):
             rss_url = "https://www.seattletimes.com/seattle-news/feed/"
             feed = feedparser.parse(rss_url)
             
-            for entry in feed.entries[:self.config.max_articles_per_source]:
+            for entry in feed.entries:
+                publish_date = entry.get('published', '')
+                
+                # Filter for past year articles
+                if publish_date and not any(year in publish_date for year in ['2024', '2025']):
+                    continue
+                
                 article_data = {
                     'title': entry.get('title', ''),
                     'content': entry.get('summary', entry.get('description', '')),
-                    'publish_date': entry.get('published'),
+                    'publish_date': publish_date,
                     'url': entry.get('link', ''),
                     'source': 'Seattle Times (RSS)'
                 }
                 
                 if self._is_relevant(article_data):
                     results.append(article_data)
+                    if len(results) >= self.config.max_articles_per_source:
+                        break
+            
+            # If RSS fails or returns few results, try Wayback Machine
+            if len(results) < 2:
+                self.logger.info("Few RSS results, trying Wayback Machine...")
+                wayback_urls = get_recent_wayback_urls("https://www.seattletimes.com/seattle-news/")
+                
+                for wayback_url in wayback_urls[:2]:
+                    try:
+                        response = self.session.get(wayback_url, timeout=self.config.request_timeout)
+                        soup = BeautifulSoup(response.text, "html.parser")
+                        
+                        # Look for article links in archived page
+                        links = soup.find_all('a', href=True)
+                        for a in links[:15]:  # Increase limit for past year
+                            href = a['href']
+                            if 'seattletimes.com' in href and any(year in href for year in ['/2025/', '/2024/']):
+                                # Try to extract this article
+                                selectors = {
+                                    'title': ['h1', '.headline'],
+                                    'content': ['article p', 'p'],
+                                    'date': ['time']
+                                }
+                                article_data = self.extract_article_content(href, selectors)
+                                if article_data and self._is_relevant(article_data):
+                                    article_data['url'] = href
+                                    article_data['source'] = 'Seattle Times (Wayback)'
+                                    results.append(article_data)
+                                    if len(results) >= self.config.max_articles_per_source:
+                                        break
+                    except Exception as e:
+                        self.logger.warning(f"Wayback extraction failed for {wayback_url}: {e}")
                     
         except Exception as e:
             self.logger.error(f"Error with simple Seattle Times scraper: {e}")
