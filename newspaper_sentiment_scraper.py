@@ -81,61 +81,108 @@ def extract_article_bs4(url, title_selector, content_selector, date_selector=Non
         debug_print(f"Failed to parse {url} : {e}")
         return None, None, None
 
+# Keywords for relevance filtering
+RELEVANCE_KEYWORDS = [
+    "mayor", "city council", "seattle politics", "election", "candidate",
+    "municipal", "governance", "policy", "budget", "housing", "homeless",
+    "transportation", "zoning", "development", "public safety", "police",
+    "fire department", "parks", "infrastructure", "taxes", "referendum"
+]
+
+def check_relevance(title, content, keywords=RELEVANCE_KEYWORDS):
+    """Check if article is relevant based on keyword matches"""
+    text = (title + " " + content).lower()
+    matches = [kw for kw in keywords if kw.lower() in text]
+    return len(matches) >= 1, matches
+
+def get_wayback_url(original_url):
+    """Get archived version of URL from Internet Archive"""
+    try:
+        wayback_api = f"http://archive.org/wayback/available?url={original_url}"
+        resp = requests.get(wayback_api, timeout=10)
+        data = resp.json()
+        
+        if data.get('archived_snapshots', {}).get('closest', {}).get('available'):
+            archived_url = data['archived_snapshots']['closest']['url']
+            debug_print(f"Found archived version: {archived_url}")
+            return archived_url
+    except Exception as e:
+        debug_print(f"Error getting wayback URL: {e}")
+    return None
+
 def scrape_seattle_times(query="mayor", max_pages=1):
     results = []
-    for page in range(1, max_pages+1):
-        try:
-            url = f"https://www.seattletimes.com/search/?q={query}&page={page}"
-            debug_print(f"Searching Seattle Times: {url}")
-            
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-            resp = requests.get(url, headers=headers, timeout=10)
+    try:
+        # Try the main Seattle news section and look for recent articles
+        base_urls = [
+            "https://www.seattletimes.com/seattle-news/",
+            "https://www.seattletimes.com/politics/"
+        ]
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        for base_url in base_urls:
+            debug_print(f"Scraping Seattle Times section: {base_url}")
+            resp = requests.get(base_url, headers=headers, timeout=10)
             soup = BeautifulSoup(resp.text, "html.parser")
             
-            # Look for article links - try multiple patterns
+            # Look for article links with more flexible patterns
             article_links = []
+            all_links = soup.find_all('a', href=True)
+            debug_print(f"Total links found on page: {len(all_links)}")
             
-            # Look for actual article links (not section pages)
-            for a in soup.find_all('a', href=True):
+            for a in all_links:
                 href = a['href']
-                # Look for URLs that contain year patterns and specific article indicators
-                if ('/2024/' in href or '/2023/' in href) and any(pattern in href for pattern in ['/seattle-news/', '/politics/', '/business/', '/opinion/']):
-                    if href.startswith('/'):
-                        href = "https://www.seattletimes.com" + href
-                    # Exclude section pages (they typically end with just the section name)
-                    if not href.endswith('/seattle-news/') and not href.endswith('/politics/') and not href.endswith('/business/') and not href.endswith('/opinion/'):
-                        article_links.append(href)
+                # Convert relative URLs to absolute
+                if href.startswith('/'):
+                    href = "https://www.seattletimes.com" + href
+                
+                # Look for article patterns - be more flexible
+                if 'seattletimes.com' in href and any(x in href for x in ['/2024/', '/2023/', '/2022/', 'seattle-news', 'politics']):
+                    article_links.append(href)
+                    debug_print(f"Added article link: {href}")
             
             debug_print(f"Found {len(article_links)} potential article links")
             
-            # Remove duplicates
-            article_links = list(set(article_links))
+            # Remove duplicates and limit
+            article_links = list(set(article_links))[:3]
             
-            for article_url in article_links[:5]:  # Limit to first 5 to avoid overloading
+            for article_url in article_links:
                 debug_print(f"Processing article: {article_url}")
+                
+                # Try archived version first
+                wayback_url = get_wayback_url(article_url)
+                url_to_scrape = wayback_url if wayback_url else article_url
+                
                 title, content, date = extract_article_bs4(
-                    article_url,
+                    url_to_scrape,
                     'h1',
                     'p',
                     'meta[property="article:published_time"]'
                 )
-                if title and content and len(content) > 100:  # Ensure substantial content
-                    results.append({
-                        "url": article_url,
-                        "source": "Seattle Times",
-                        "title": title,
-                        "content": content[:1000] + "..." if len(content) > 1000 else content,
-                        "publish_date": date
-                    })
-                time.sleep(1)  # Be polite
                 
-        except Exception as e:
-            debug_print(f"Error scraping Seattle Times page {page}: {e}")
-        
-        time.sleep(2)  # Be polite between pages
+                # Check relevance using keyword list
+                if title and content:
+                    is_relevant, matched_keywords = check_relevance(title, content)
+                    if is_relevant:
+                        results.append({
+                            "url": article_url,  # Keep original URL for reference
+                            "source": "Seattle Times" + (" (Archived)" if wayback_url else ""),
+                            "title": title,
+                            "content": content[:1000] + "..." if len(content) > 1000 else content,
+                            "publish_date": date,
+                            "matched_keywords": matched_keywords
+                        })
+                time.sleep(1)
+            
+            time.sleep(2)
+            
+    except Exception as e:
+        debug_print(f"Error scraping Seattle Times: {e}")
     
+    debug_print(f"Seattle Times returned {len(results)} articles")
     return results
 
 def scrape_rss(rss_url, source_name, keyword):
@@ -203,13 +250,16 @@ def scrape_stranger(query="mayor"):
             title, content, date = extract_article_bs4(
                 article_url, 'h1', 'p')
             if title and content and len(content) > 100:
-                results.append({
-                    "url": article_url,
-                    "source": "The Stranger",
-                    "title": title,
-                    "content": content[:1000] + "..." if len(content) > 1000 else content,
-                    "publish_date": date
-                })
+                is_relevant, matched_keywords = check_relevance(title, content)
+                if is_relevant:
+                    results.append({
+                        "url": article_url,
+                        "source": "The Stranger",
+                        "title": title,
+                        "content": content[:1000] + "..." if len(content) > 1000 else content,
+                        "publish_date": date,
+                        "matched_keywords": matched_keywords
+                    })
             time.sleep(1)
     except Exception as e:
         debug_print(f"Error scraping The Stranger: {e}")
@@ -244,13 +294,16 @@ def scrape_chs(query="mayor", max_pages=1):
             title, content, date = extract_article_bs4(
                 article_url, 'h1', 'p')
             if title and content and len(content) > 100:
-                results.append({
-                    "url": article_url,
-                    "source": "CHS",
-                    "title": title,
-                    "content": content[:1000] + "..." if len(content) > 1000 else content,
-                    "publish_date": date
-                })
+                is_relevant, matched_keywords = check_relevance(title, content)
+                if is_relevant:
+                    results.append({
+                        "url": article_url,
+                        "source": "CHS",
+                        "title": title,
+                        "content": content[:1000] + "..." if len(content) > 1000 else content,
+                        "publish_date": date,
+                        "matched_keywords": matched_keywords
+                    })
             time.sleep(1)
     except Exception as e:
         debug_print(f"Error scraping CHS: {e}")
