@@ -391,14 +391,21 @@ class StrangerScraper(BaseScraper):
     def scrape(self, query: str) -> List[Dict]:
         results = []
         try:
-            search_url = f"https://www.thestranger.com/search?q={query}"
-            article_links = self._find_stranger_articles(search_url)
+            # Instead of search, crawl main news and election sections
+            section_urls = [
+                "https://www.thestranger.com/news/",
+                "https://www.thestranger.com/stranger-election-control-board/"
+            ]
+            article_links = set()
+            for section_url in section_urls:
+                article_links.update(self._find_all_stranger_articles(section_url))
+                time.sleep(self.config.delay_between_requests)
             selectors = {
                 'title': ['h1', '.headline', '.entry-title'],
                 'content': ['article p', '.article-body p', 'p'],
                 'date': ['time', '.date']
             }
-            for url in article_links[:self.config.max_articles_per_source]:
+            for url in list(article_links)[:self.config.max_articles_per_source]:
                 article_data = self.extract_article_content(url, selectors)
                 if (article_data and 
                     len(article_data.get('content', '')) > self.config.min_content_length and 
@@ -411,42 +418,25 @@ class StrangerScraper(BaseScraper):
             self.logger.error(f"Error scraping The Stranger: {e}")
         return results
 
-    def _find_stranger_articles(self, search_url: str) -> List[str]:
+    def _find_all_stranger_articles(self, section_url: str) -> set:
+        """Find all article URLs from a Stranger section page (not just search)"""
         article_links = set()
         try:
-            response = self.session.get(search_url, timeout=self.config.request_timeout)
+            response = self.session.get(section_url, timeout=self.config.request_timeout)
             soup = BeautifulSoup(response.text, "html.parser")
             links = soup.find_all('a', href=True)
-            self.logger.info(f"Found {len(links)} links on Stranger search page")
             for a in links:
                 href = a['href']
+                # Accept all Stranger articles from 2024/2025 with enough path segments
                 if any(year in href for year in ['/2025/', '/2024/']):
                     if not href.startswith('http'):
                         href = urljoin('https://www.thestranger.com', href)
                     if 'thestranger.com' in href and len(href.split('/')) > 4:
                         article_links.add(href)
-            if not article_links:
-                self.logger.info("No Stranger articles found, trying Wayback Machine...")
-                wayback_url = get_wayback_url(search_url)
-                if wayback_url:
-                    try:
-                        response = self.session.get(wayback_url, timeout=self.config.request_timeout)
-                        wayback_soup = BeautifulSoup(response.text, "html.parser")
-                        wayback_links = wayback_soup.find_all('a', href=True)
-                        for a in wayback_links:
-                            href = a['href']
-                            if any(year in href for year in ['/2025/', '/2024/']):
-                                if not href.startswith('http'):
-                                    href = urljoin('https://www.thestranger.com', href)
-                                if 'thestranger.com' in href:
-                                    article_links.add(href)
-                        self.logger.info(f"Found {len(article_links)} articles from Wayback")
-                    except Exception as e:
-                        self.logger.error(f"Wayback Stranger search failed: {e}")
         except Exception as e:
-            self.logger.error(f"Error finding Stranger articles: {e}")
-        self.logger.info(f"Found {len(article_links)} Stranger article links")
-        return list(article_links)
+            self.logger.error(f"Error finding Stranger articles from section: {e}")
+        self.logger.info(f"Found {len(article_links)} Stranger article links from {section_url}")
+        return article_links
 
 class CHSScraper(BaseScraper):
     def scrape(self, query: str) -> List[Dict]:
@@ -522,23 +512,19 @@ class RSSFeedScraper(BaseScraper):
             ("https://www.king5.com/feeds/syndication/rss/news/local", "KING 5"),
             ("https://komonews.com/news/local/rss.xml", "KOMO News"),
         ]
-    
-    def scrape(self, query: str) -> List[Dict]:
+
+    def scrape(self, query: str = None) -> List[Dict]:
+        """Scan all articles from all RSS feeds, not just those matching a query."""
         results = []
         seen_urls = set()
         for rss_url, source_name in self.rss_feeds:
             try:
                 headers = {'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'}
                 response = self.session.get(rss_url, headers=headers, timeout=self.config.request_timeout)
-                feed = None
-                if response.status_code == 200:
-                    feed = feedparser.parse(response.content)
-                else:
-                    feed = feedparser.parse(rss_url)
-                
+                feed = feedparser.parse(response.content) if response.status_code == 200 else feedparser.parse(rss_url)
                 print(f"DEBUG RSS {source_name}: {len(feed.entries)} entries")
                 entries = feed.entries if feed.entries else []
-                
+
                 # If feed is empty, try multiple recent Wayback Machine snapshots
                 if not entries:
                     self.logger.info(f"No entries in {source_name} RSS, trying multiple Wayback Machine snapshots...")
@@ -551,13 +537,13 @@ class RSSFeedScraper(BaseScraper):
                             entries.extend(wayback_feed.entries)
                         except Exception as e:
                             self.logger.warning(f"Wayback RSS fetch failed for {wayback_url}: {e}")
-                
+
                 for entry in entries:
                     title = entry.get('title', '')
                     summary = entry.get('summary', entry.get('description', ''))
                     publish_date = entry.get('published', '')
                     url = entry.get('link', '')
-                    
+
                     # Filter for past year articles
                     if publish_date and not any(year in publish_date for year in ['2024', '2025']):
                         continue
@@ -577,7 +563,7 @@ class RSSFeedScraper(BaseScraper):
                         seen_urls.add(url)
             except Exception as e:
                 self.logger.error(f"Error scraping RSS {source_name}: {e}")
-        
+
         return results
 
 # Enhanced Wayback Machine Integration
