@@ -343,6 +343,7 @@ class SeattleTimesScraper(BaseScraper):
             
             for a in all_links:
                 href = a['href']
+                print(f"DEBUG: Found link: {href}")  # Add this line
                 if href.startswith('/'):
                     href = "https://www.seattletimes.com" + href
                 
@@ -376,9 +377,8 @@ class SeattleTimesScraper(BaseScraper):
                     if href.startswith('/'):
                         href = "https://www.seattletimes.com" + href
                     
-                    if ('seattletimes.com' in href and 
-                        ('seattle-news' in href or 'politics' in href or 'local' in href) and
-                        any(year in href for year in ['/2025/', '/2024/'])):
+                    if 'seattletimes.com' in href:
+                        print(f"WAYBACK DEBUG: {href}")
                         article_links.add(href)
                 
                 self.logger.info(f"Found {len(article_links)} URLs from Wayback Machine")
@@ -392,71 +392,59 @@ class StrangerScraper(BaseScraper):
         results = []
         try:
             search_url = f"https://www.thestranger.com/search?q={query}"
-            
-            response = self.session.get(search_url, timeout=self.config.request_timeout)
-            soup = BeautifulSoup(response.text, "html.parser")
-            
+            article_links = self._find_stranger_articles(search_url)
             selectors = {
                 'title': ['h1', '.headline', '.entry-title'],
                 'content': ['article p', '.article-body p', 'p'],
                 'date': ['time', '.date']
             }
-            
-            article_links = self._find_stranger_articles(soup)
-            
             for url in article_links[:self.config.max_articles_per_source]:
                 article_data = self.extract_article_content(url, selectors)
                 if (article_data and 
                     len(article_data.get('content', '')) > self.config.min_content_length and 
                     self._is_relevant(article_data)):
-                    
                     article_data['url'] = url
                     article_data['source'] = 'The Stranger'
                     results.append(article_data)
-                
                 time.sleep(self.config.delay_between_requests)
-                
         except Exception as e:
             self.logger.error(f"Error scraping The Stranger: {e}")
-        
         return results
-    
-    def _find_stranger_articles(self, soup: BeautifulSoup) -> List[str]:
-        """Extract article URLs from Stranger search page"""
-        article_links = set()  # Use set to avoid duplicates
-        links = soup.find_all('a', href=True)
-        self.logger.info(f"Found {len(links)} links on Stranger search page")
-        
-        for a in links:
-            href = a['href']
-            if any(year in href for year in ['/2025/', '/2024/']):
-                if not href.startswith('http'):
-                    href = urljoin('https://www.thestranger.com', href)
-                if 'thestranger.com' in href and len(href.split('/')) > 4:
-                    article_links.add(href)
-        
-        # If no articles found, try Wayback Machine
-        if not article_links:
-            self.logger.info("No Stranger articles found, trying Wayback Machine...")
-            wayback_url = get_wayback_url(f"https://www.thestranger.com/search?q=mayor")
-            if wayback_url:
-                try:
-                    response = self.session.get(wayback_url, timeout=self.config.request_timeout)
-                    wayback_soup = BeautifulSoup(response.text, "html.parser")
-                    wayback_links = wayback_soup.find_all('a', href=True)
-                    
-                    for a in wayback_links:
-                        href = a['href']
-                        if any(year in href for year in ['/2025/', '/2024/']):
-                            if not href.startswith('http'):
-                                href = urljoin('https://www.thestranger.com', href)
-                            if 'thestranger.com' in href:
-                                article_links.add(href)
-                    
-                    self.logger.info(f"Found {len(article_links)} articles from Wayback")
-                except Exception as e:
-                    self.logger.error(f"Wayback Stranger search failed: {e}")
-        
+
+    def _find_stranger_articles(self, search_url: str) -> List[str]:
+        article_links = set()
+        try:
+            response = self.session.get(search_url, timeout=self.config.request_timeout)
+            soup = BeautifulSoup(response.text, "html.parser")
+            links = soup.find_all('a', href=True)
+            self.logger.info(f"Found {len(links)} links on Stranger search page")
+            for a in links:
+                href = a['href']
+                if any(year in href for year in ['/2025/', '/2024/']):
+                    if not href.startswith('http'):
+                        href = urljoin('https://www.thestranger.com', href)
+                    if 'thestranger.com' in href and len(href.split('/')) > 4:
+                        article_links.add(href)
+            if not article_links:
+                self.logger.info("No Stranger articles found, trying Wayback Machine...")
+                wayback_url = get_wayback_url(search_url)
+                if wayback_url:
+                    try:
+                        response = self.session.get(wayback_url, timeout=self.config.request_timeout)
+                        wayback_soup = BeautifulSoup(response.text, "html.parser")
+                        wayback_links = wayback_soup.find_all('a', href=True)
+                        for a in wayback_links:
+                            href = a['href']
+                            if any(year in href for year in ['/2025/', '/2024/']):
+                                if not href.startswith('http'):
+                                    href = urljoin('https://www.thestranger.com', href)
+                                if 'thestranger.com' in href:
+                                    article_links.add(href)
+                        self.logger.info(f"Found {len(article_links)} articles from Wayback")
+                    except Exception as e:
+                        self.logger.error(f"Wayback Stranger search failed: {e}")
+        except Exception as e:
+            self.logger.error(f"Error finding Stranger articles: {e}")
         self.logger.info(f"Found {len(article_links)} Stranger article links")
         return list(article_links)
 
@@ -465,50 +453,61 @@ class CHSScraper(BaseScraper):
         results = []
         try:
             search_url = f"https://www.capitolhillseattle.com/?s={query}"
-            
-            response = self.session.get(search_url, timeout=self.config.request_timeout)
-            soup = BeautifulSoup(response.text, "html.parser")
-            
+            article_links = self._find_chs_articles(search_url)
             selectors = {
                 'title': ['h1', '.entry-title', '.headline'],
                 'content': ['.entry-content p', 'article p', 'p'],
                 'date': ['time', '.date', '.published']
             }
-            
-            article_links = self._find_chs_articles(soup)
-            
             for url in article_links[:self.config.max_articles_per_source]:
                 article_data = self.extract_article_content(url, selectors)
                 if (article_data and 
                     len(article_data.get('content', '')) > self.config.min_content_length and 
                     self._is_relevant(article_data)):
-                    
                     article_data['url'] = url
                     article_data['source'] = 'Capitol Hill Seattle'
                     results.append(article_data)
-                
                 time.sleep(self.config.delay_between_requests)
-                
         except Exception as e:
             self.logger.error(f"Error scraping CHS: {e}")
-        
         return results
-    
-    def _find_chs_articles(self, soup: BeautifulSoup) -> List[str]:
-        """Extract article URLs from CHS search page"""
-        article_links = set()  # Use set to avoid duplicates
-        links = soup.find_all('a', href=True)
-        self.logger.info(f"Found {len(links)} links on CHS search page")
-        
-        for a in links:
-            href = a['href']
-            if ('capitolhillseattle.com' in href and 
-                any(year in href for year in ['/2025/', '/2024/']) and 
-                len(href.split('/')) > 4 and
-                'share=' not in href and
-                '#' not in href):  # Avoid anchor links
-                article_links.add(href)
-        
+
+    def _find_chs_articles(self, search_url: str) -> List[str]:
+        article_links = set()
+        try:
+            response = self.session.get(search_url, timeout=self.config.request_timeout)
+            soup = BeautifulSoup(response.text, "html.parser")
+            links = soup.find_all('a', href=True)
+            self.logger.info(f"Found {len(links)} links on CHS search page")
+            for a in links:
+                href = a['href']
+                if ('capitolhillseattle.com' in href and 
+                    any(year in href for year in ['/2025/', '/2024/']) and 
+                    len(href.split('/')) > 4 and
+                    'share=' not in href and
+                    '#' not in href):
+                    article_links.add(href)
+            if not article_links:
+                self.logger.info("No CHS articles found, trying Wayback Machine...")
+                wayback_url = get_wayback_url(search_url)
+                if wayback_url:
+                    try:
+                        response = self.session.get(wayback_url, timeout=self.config.request_timeout)
+                        wayback_soup = BeautifulSoup(response.text, "html.parser")
+                        wayback_links = wayback_soup.find_all('a', href=True)
+                        for a in wayback_links:
+                            href = a['href']
+                            if ('capitolhillseattle.com' in href and 
+                                any(year in href for year in ['/2025/', '/2024/']) and 
+                                len(href.split('/')) > 4 and
+                                'share=' not in href and
+                                '#' not in href):
+                                article_links.add(href)
+                        self.logger.info(f"Found {len(article_links)} CHS articles from Wayback")
+                    except Exception as e:
+                        self.logger.error(f"Wayback CHS search failed: {e}")
+        except Exception as e:
+            self.logger.error(f"Error finding CHS articles: {e}")
         self.logger.info(f"Found {len(article_links)} CHS article links")
         return list(article_links)
 
