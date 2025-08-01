@@ -525,41 +525,56 @@ class RSSFeedScraper(BaseScraper):
     
     def scrape(self, query: str) -> List[Dict]:
         results = []
+        seen_urls = set()
         for rss_url, source_name in self.rss_feeds:
             try:
-                # Add user agent for RSS feeds
                 headers = {'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'}
                 response = self.session.get(rss_url, headers=headers, timeout=self.config.request_timeout)
-                
+                feed = None
                 if response.status_code == 200:
                     feed = feedparser.parse(response.content)
                 else:
-                    feed = feedparser.parse(rss_url)  # Fallback to direct parsing
+                    feed = feedparser.parse(rss_url)
                 
                 print(f"DEBUG RSS {source_name}: {len(feed.entries)} entries")
+                entries = feed.entries if feed.entries else []
                 
-                for entry in feed.entries:
+                # If feed is empty, try multiple recent Wayback Machine snapshots
+                if not entries:
+                    self.logger.info(f"No entries in {source_name} RSS, trying multiple Wayback Machine snapshots...")
+                    wayback_urls = get_recent_wayback_urls(rss_url, limit=5)
+                    for wayback_url in wayback_urls:
+                        try:
+                            response = self.session.get(wayback_url, headers=headers, timeout=self.config.request_timeout)
+                            wayback_feed = feedparser.parse(response.content)
+                            print(f"DEBUG RSS {source_name} (Wayback): {len(wayback_feed.entries)} entries from {wayback_url}")
+                            entries.extend(wayback_feed.entries)
+                        except Exception as e:
+                            self.logger.warning(f"Wayback RSS fetch failed for {wayback_url}: {e}")
+                
+                for entry in entries:
                     title = entry.get('title', '')
                     summary = entry.get('summary', entry.get('description', ''))
                     publish_date = entry.get('published', '')
+                    url = entry.get('link', '')
                     
                     # Filter for past year articles
                     if publish_date and not any(year in publish_date for year in ['2024', '2025']):
                         continue
-                    
+                    if url in seen_urls:
+                        continue
                     article_data = {
                         'title': title,
                         'content': summary or title,
                         'publish_date': publish_date
                     }
-                    
                     if self._is_relevant(article_data):
                         article_data.update({
-                            'url': entry.get('link', ''),
+                            'url': url,
                             'source': source_name
                         })
                         results.append(article_data)
-                        
+                        seen_urls.add(url)
             except Exception as e:
                 self.logger.error(f"Error scraping RSS {source_name}: {e}")
         
