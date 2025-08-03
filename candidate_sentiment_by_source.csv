@@ -1,0 +1,14 @@
+"candidate","source","articles","avg_sentiment","total_sentiment"
+"bruce","Capitol Hill Seattle",9,0.0769590649283612,11
+"bruce","The Stranger",6,0.0670354759380723,-40
+"chan","KIRO 7",2,0.727272727272727,27
+"chan","Capitol Hill Seattle",4,0.262403100775194,15
+"chan","Seattle Times (Simple)",3,0.211111111111111,6
+"chan","The Stranger",14,-0.377733394426086,-433
+"chan","KING 5",2,-0.75,-1
+"davison","The Stranger",3,-0.820519277653688,-194
+"foster","The Stranger",3,-0.406878306878307,-52
+"harrell","Capitol Hill Seattle",9,0.0769590649283612,11
+"harrell","The Stranger",6,0.0670354759380723,-40
+"nelson","Capitol Hill Seattle",3,0.149762329174094,18
+"nelson","The Stranger",5,-0.465930521926285,-182
