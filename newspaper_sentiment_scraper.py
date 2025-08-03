@@ -25,6 +25,8 @@ class ScrapingConfig:
     delay_between_sources: float = 2.0
     min_content_length: int = 100
     max_content_length: int = 1000
+    use_wayback_fallback: bool = True
+    max_wayback_attempts: int = 2
 
 def load_config(config_file: str = "scraping_config.json") -> ScrapingConfig:
     try:
@@ -343,7 +345,6 @@ class SeattleTimesScraper(BaseScraper):
             
             for a in all_links:
                 href = a['href']
-                print(f"DEBUG: Found link: {href}")  # Add this line
                 if href.startswith('/'):
                     href = "https://www.seattletimes.com" + href
                 
@@ -377,8 +378,10 @@ class SeattleTimesScraper(BaseScraper):
                     if href.startswith('/'):
                         href = "https://www.seattletimes.com" + href
                     
-                    if 'seattletimes.com' in href:
-                        print(f"WAYBACK DEBUG: {href}")
+                    # More flexible Seattle Times filtering
+                    if ('seattletimes.com' in href and 
+                        len(href.split('/')) > 4 and
+                        not any(skip in href for skip in ['/feed/', '/rss', '/tag/', '/category/', '/author/', '/games-', '/horoscopes', '/obituaries', '/jobs', '/classifieds'])):
                         article_links.add(href)
                 
                 self.logger.info(f"Found {len(article_links)} URLs from Wayback Machine")
@@ -501,16 +504,119 @@ class CHSScraper(BaseScraper):
         self.logger.info(f"Found {len(article_links)} CHS article links")
         return list(article_links)
 
+class WebScrapingScraper(BaseScraper):
+    """Scraper for news sites that don't have working RSS feeds"""
+    def __init__(self, config: ScrapingConfig, session: requests.Session):
+        super().__init__(config, session)
+        self.news_sites = [
+            {
+                'name': 'KIRO 7',
+                'url': 'https://www.kiro7.com/news/local/',
+                'selectors': {
+                    'title': ['h1', '.headline', '.story-headline', 'h2', '.title'],
+                    'content': ['.story-body p', 'article p', '.content p', 'p'],
+                    'date': ['time', '.date', '.story-date', '.published']
+                }
+            },
+            {
+                'name': 'KOMO News',
+                'url': 'https://komonews.com/news/local',
+                'selectors': {
+                    'title': ['h1', '.headline', '.story-title', 'h2', '.title'],
+                    'content': ['.story-content p', 'article p', '.content p', 'p'],
+                    'date': ['time', '.date', '.story-date', '.published']
+                }
+            },
+            {
+                'name': 'KUOW',
+                'url': 'https://www.kuow.org/news',
+                'selectors': {
+                    'title': ['h1', '.headline', '.story-title', 'h2', '.title'],
+                    'content': ['.story-text p', 'article p', '.content p', 'p'],
+                    'date': ['time', '.date', '.story-date', '.published']
+                }
+            }
+        ]
+
+    def scrape(self, query: str = None) -> List[Dict]:
+        """Scrape articles from news sites directly"""
+        results = []
+        seen_urls = set()
+        
+        for site in self.news_sites:
+            try:
+                self.logger.info(f"Scraping {site['name']}...")
+                articles = self._scrape_site(site)
+                
+                self.logger.info(f"Extracted {len(articles)} articles from {site['name']}")
+                
+                for article in articles:
+                    if article['url'] not in seen_urls and self._is_relevant(article):
+                        article['source'] = site['name']
+                        results.append(article)
+                        seen_urls.add(article['url'])
+                        
+                        if len([r for r in results if r['source'] == site['name']]) >= self.config.max_articles_per_source:
+                            break
+                            
+                time.sleep(self.config.delay_between_requests)
+                
+            except Exception as e:
+                self.logger.error(f"Error scraping {site['name']}: {e}")
+        
+        return results
+    
+    def _scrape_site(self, site: dict) -> List[Dict]:
+        """Scrape a single news site"""
+        articles = []
+        
+        try:
+            # Get the main page
+            response = self.session.get(site['url'], timeout=self.config.request_timeout)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Find article links - use broader selectors
+            links = soup.find_all('a', href=True)
+            article_urls = set()
+            
+            for link in links[:50]:  # Check more links
+                href = link.get('href')
+                if href:
+                    if not href.startswith('http'):
+                        href = urljoin(site['url'], href)
+                    
+                    # More flexible filtering - look for news articles
+                    if (site['name'].lower().replace(' ', '') in href.lower() or 
+                        'news' in href.lower() or 'local' in href.lower()) and \
+                       len(href.split('/')) > 4 and \
+                       not any(skip in href.lower() for skip in ['video', 'photo', 'gallery', 'rss', 'feed']):
+                        article_urls.add(href)
+            
+            self.logger.info(f"Found {len(article_urls)} potential article URLs for {site['name']}")
+            
+            # Extract content from each article
+            for url in list(article_urls)[:self.config.max_articles_per_source]:
+                article_data = self.extract_article_content(url, site['selectors'])
+                if article_data:
+                    article_data['url'] = url
+                    articles.append(article_data)
+                    self.logger.debug(f"Successfully extracted: {article_data['title'][:50]}...")
+                else:
+                    self.logger.debug(f"Failed to extract content from: {url}")
+                    
+                time.sleep(self.config.delay_between_requests)
+                
+        except Exception as e:
+            self.logger.error(f"Error scraping {site['name']}: {e}")
+        
+        return articles
+
 class RSSFeedScraper(BaseScraper):
     def __init__(self, config: ScrapingConfig, session: requests.Session):
         super().__init__(config, session)
         self.rss_feeds = [
-            ("https://www.kuow.org/rss", "KUOW"),
             ("https://www.seattletimes.com/seattle-news/feed/", "Seattle Times RSS"),
-            ("https://feeds.feedburner.com/seattletimes/local", "Seattle Times Local RSS"),
-            ("https://www.kiro7.com/news/local/feed/", "KIRO 7"),
             ("https://www.king5.com/feeds/syndication/rss/news/local", "KING 5"),
-            ("https://komonews.com/news/local/rss.xml", "KOMO News"),
         ]
 
     def scrape(self, query: str = None) -> List[Dict]:
@@ -519,28 +625,49 @@ class RSSFeedScraper(BaseScraper):
         seen_urls = set()
         for rss_url, source_name in self.rss_feeds:
             try:
-                headers = {'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'}
-                response = self.session.get(rss_url, headers=headers, timeout=self.config.request_timeout)
-                feed = feedparser.parse(response.content) if response.status_code == 200 else feedparser.parse(rss_url)
-                print(f"DEBUG RSS {source_name}: {len(feed.entries)} entries")
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'application/rss+xml, application/xml, text/xml'
+                }
+                try:
+                    response = self.session.get(rss_url, headers=headers, timeout=self.config.request_timeout)
+                    if response.status_code == 200:
+                        feed = feedparser.parse(response.content)
+                    else:
+                        self.logger.debug(f"RSS {source_name} returned status {response.status_code}")
+                        feed = feedparser.parse(rss_url)
+                except Exception as e:
+                    self.logger.debug(f"RSS {source_name} request failed: {e}")
+                    feed = feedparser.parse(rss_url)
+                if len(feed.entries) > 0:
+                    self.logger.info(f"RSS {source_name}: {len(feed.entries)} entries")
+                else:
+                    self.logger.debug(f"RSS {source_name}: {len(feed.entries)} entries")
                 entries = feed.entries if feed.entries else []
 
-                # If feed is empty, try multiple recent Wayback Machine snapshots
-                if not entries:
-                    self.logger.info(f"No entries in {source_name} RSS, trying multiple Wayback Machine snapshots...")
-                    wayback_urls = get_recent_wayback_urls(rss_url, limit=5)
+                # If feed is empty, try limited Wayback Machine snapshots
+                if not entries and self.config.use_wayback_fallback:
+                    self.logger.info(f"No entries in {source_name} RSS, trying Wayback Machine...")
+                    wayback_urls = get_recent_wayback_urls(rss_url, limit=self.config.max_wayback_attempts)
                     for wayback_url in wayback_urls:
                         try:
                             response = self.session.get(wayback_url, headers=headers, timeout=self.config.request_timeout)
                             wayback_feed = feedparser.parse(response.content)
-                            print(f"DEBUG RSS {source_name} (Wayback): {len(wayback_feed.entries)} entries from {wayback_url}")
+                            if len(wayback_feed.entries) > 0:
+                                self.logger.info(f"RSS {source_name} (Wayback): {len(wayback_feed.entries)} entries")
+                            else:
+                                self.logger.debug(f"RSS {source_name} (Wayback): {len(wayback_feed.entries)} entries")
                             entries.extend(wayback_feed.entries)
+                            if entries:  # Stop after first successful wayback fetch
+                                break
                         except Exception as e:
-                            self.logger.warning(f"Wayback RSS fetch failed for {wayback_url}: {e}")
+                            self.logger.debug(f"Wayback RSS fetch failed for {wayback_url}: {e}")
 
                 for entry in entries:
                     title = entry.get('title', '')
-                    summary = entry.get('summary', entry.get('description', ''))
+                    summary = entry.get('summary', '')
+                    if not summary and 'content' in entry:
+                        summary = entry['content'][0].get('value', '')
                     publish_date = entry.get('published', '')
                     url = entry.get('link', '')
 
@@ -580,10 +707,10 @@ def get_wayback_url(original_url: str, timestamp: str = None) -> Optional[str]:
         
         if data.get('archived_snapshots', {}).get('closest', {}).get('available'):
             archived_url = data['archived_snapshots']['closest']['url']
-            logger.info(f"Found archived version: {archived_url}")
+            logger.debug(f"Found archived version: {archived_url}")
             return archived_url
     except Exception as e:
-        logger.warning(f"Error getting wayback URL for {original_url}: {e}")
+        logger.debug(f"Error getting wayback URL for {original_url}: {e}")
     return None
 
 def get_recent_wayback_urls(base_url: str, limit: int = 5) -> List[str]:
@@ -633,11 +760,11 @@ class SimpleSeattleTimesScraper(BaseScraper):
                         break
             
             # If RSS fails or returns few results, try Wayback Machine
-            if len(results) < 2:
+            if len(results) < 2 and self.config.use_wayback_fallback:
                 self.logger.info("Few RSS results, trying Wayback Machine...")
-                wayback_urls = get_recent_wayback_urls("https://www.seattletimes.com/seattle-news/")
+                wayback_urls = get_recent_wayback_urls("https://www.seattletimes.com/seattle-news/", limit=self.config.max_wayback_attempts)
                 
-                for wayback_url in wayback_urls[:2]:
+                for wayback_url in wayback_urls:
                     try:
                         response = self.session.get(wayback_url, timeout=self.config.request_timeout)
                         soup = BeautifulSoup(response.text, "html.parser")
@@ -721,13 +848,14 @@ def main():
     config = load_config()
     session = create_session(config)
     
-    # Initialize scrapers - add simple Seattle Times as backup
+    # Initialize scrapers - add web scraping for broken RSS feeds
     scrapers = [
         SeattleTimesScraper(config, session),
         SimpleSeattleTimesScraper(config, session),
         StrangerScraper(config, session),
         CHSScraper(config, session),
-        RSSFeedScraper(config, session)
+        RSSFeedScraper(config, session),
+        WebScrapingScraper(config, session)
     ]
     
     all_results = []

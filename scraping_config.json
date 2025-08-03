@@ -1,0 +1,11 @@
+{
+    "max_pages": 1,
+    "max_articles_per_source": 10,
+    "request_timeout": 15,
+    "delay_between_requests": 0.5,
+    "delay_between_sources": 1.0,
+    "min_content_length": 50,
+    "max_content_length": 2000,
+    "use_wayback_fallback": true,
+    "max_wayback_attempts": 2
+}
