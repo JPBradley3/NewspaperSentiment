@@ -219,7 +219,7 @@ class BaseScraper(ABC):
         self.logger = logging.getLogger(self.__class__.__name__)
     
     @abstractmethod
-    def scrape(self, query: str) -> List[Dict]:
+    def scrape(self) -> List[Dict]:
         pass
     
     def extract_article_content(self, url: str, selectors: Dict[str, List[str]]) -> Optional[Dict]:
@@ -302,7 +302,7 @@ class BaseScraper(ABC):
 
 # Specific Scraper Implementations
 class SeattleTimesScraper(BaseScraper):
-    def scrape(self, query: str) -> List[Dict]:
+    def scrape(self) -> List[Dict]:
         results = []
         base_urls = [
             "https://www.seattletimes.com/seattle-news/",
@@ -403,7 +403,7 @@ class SeattleTimesScraper(BaseScraper):
         return []
 
 class StrangerScraper(BaseScraper):
-    def scrape(self, query: str) -> List[Dict]:
+    def scrape(self) -> List[Dict]:
         results = []
         try:
             # Instead of search, crawl main news and election sections
@@ -454,11 +454,12 @@ class StrangerScraper(BaseScraper):
         return article_links
 
 class CHSScraper(BaseScraper):
-    def scrape(self, query: str) -> List[Dict]:
+    def scrape(self) -> List[Dict]:
         results = []
         try:
-            search_url = f"https://www.capitolhillseattle.com/?s={query}"
-            article_links = self._find_chs_articles(search_url)
+            # Changed from search to crawling the main news category for more articles
+            base_url = "https://www.capitolhillseattle.com/category/news/"
+            article_links = self._find_chs_articles(base_url)
             selectors = {
                 'title': ['h1', '.entry-title', '.headline'],
                 'content': ['.entry-content p', 'article p', 'p'],
@@ -477,42 +478,52 @@ class CHSScraper(BaseScraper):
             self.logger.error(f"Error scraping CHS: {e}")
         return results
 
-    def _find_chs_articles(self, search_url: str) -> List[str]:
+    def _find_chs_articles(self, base_url: str) -> List[str]:
         article_links = set()
-        try:
-            response = self.session.get(search_url, timeout=self.config.request_timeout)
-            soup = BeautifulSoup(response.text, "html.parser")
-            links = soup.find_all('a', href=True)
-            self.logger.info(f"Found {len(links)} links on CHS search page")
-            for a in links:
-                href = a['href']
-                if ('capitolhillseattle.com' in href and 
-                    any(year in href for year in ['/2025/', '/2024/']) and 
-                    len(href.split('/')) > 4 and
-                    'share=' not in href and
-                    '#' not in href):
-                    article_links.add(href)
-            if not article_links:
-                self.logger.info("No CHS articles found, trying Wayback Machine...")
-                wayback_url = get_wayback_url(search_url)
-                if wayback_url:
-                    try:
-                        response = self.session.get(wayback_url, timeout=self.config.request_timeout)
-                        wayback_soup = BeautifulSoup(response.text, "html.parser")
-                        wayback_links = wayback_soup.find_all('a', href=True)
-                        for a in wayback_links:
-                            href = a['href']
-                            if ('capitolhillseattle.com' in href and 
-                                any(year in href for year in ['/2025/', '/2024/']) and 
-                                len(href.split('/')) > 4 and
-                                'share=' not in href and
-                                '#' not in href):
-                                article_links.add(href)
-                        self.logger.info(f"Found {len(article_links)} CHS articles from Wayback")
-                    except Exception as e:
-                        self.logger.error(f"Wayback CHS search failed: {e}")
-        except Exception as e:
-            self.logger.error(f"Error finding CHS articles: {e}")
+        # Add pagination to scrape multiple pages - increased depth
+        for page_num in range(1, 6):  # Scrape first 5 pages
+            if page_num == 1:
+                url = base_url
+            else:
+                url = f"{base_url}page/{page_num}/"
+            
+            self.logger.info(f"Scraping CHS page: {url}")
+            try:
+                response = self.session.get(url, timeout=self.config.request_timeout)
+                if response.status_code != 200:
+                    self.logger.warning(f"CHS page {url} returned status {response.status_code}, stopping pagination.")
+                    break
+                
+                soup = BeautifulSoup(response.text, "html.parser")
+                links = soup.find_all('a', href=True)
+                
+                found_on_page = 0
+                for a in links:
+                    href = a['href']
+                    if ('capitolhillseattle.com' in href and 
+                        any(year in href for year in ['/2025/', '/2024/']) and 
+                        len(href.split('/')) > 4 and
+                        'share=' not in href and
+                        '#' not in href):
+                        article_links.add(href)
+                        found_on_page += 1
+                
+                self.logger.info(f"Found {found_on_page} new article links on CHS page {page_num}")
+                
+                if len(article_links) >= self.config.max_articles_per_source:
+                    self.logger.info(f"Reached max articles ({self.config.max_articles_per_source}) for CHS. Stopping.")
+                    break
+
+                if found_on_page == 0 and page_num > 1:
+                    self.logger.info("No new links found, stopping CHS pagination.")
+                    break
+
+                time.sleep(self.config.delay_between_requests)
+
+            except Exception as e:
+                self.logger.error(f"Error finding CHS articles on page {page_num}: {e}")
+                break  # Stop if a page fails
+
         self.logger.info(f"Found {len(article_links)} CHS article links")
         return list(article_links)
 
@@ -544,22 +555,13 @@ class WebScrapingScraper(BaseScraper):
                 'url': 'https://www.kuow.org/news',
                 'selectors': {
                     'title': ['h1', '.headline', '.story-title', 'h2', '.title'],
-                    'content': ['.story-text p', 'article p', '.content p', 'p'],
+                    'content': ['.rich-text p', '.body-content p', '.story-text p', 'article p', '.content p', 'p'],
                     'date': ['time', '.date', '.story-date', '.published']
-                }
-            },
-            {
-                'name': 'Seattle Times (Web)',
-                'url': 'https://www.seattletimes.com/seattle-news/',
-                'selectors': {
-                    'title': ['h1', '.headline', '.entry-title', 'h2', '.title'],
-                    'content': ['article p', '.article-body p', '.content p', 'p'],
-                    'date': ['time', '.date', '.published', 'meta[property="article:published_time"]']
                 }
             }
         ]
 
-    def scrape(self, query: str = None) -> List[Dict]:
+    def scrape(self) -> List[Dict]:
         """Scrape articles from news sites directly"""
         results = []
         seen_urls = set()
@@ -600,15 +602,15 @@ class WebScrapingScraper(BaseScraper):
             links = soup.find_all('a', href=True)
             article_urls = set()
             
-            for link in links[:50]:  # Check more links
+            for link in links:  # Check all links, not just the first 50
                 href = link.get('href')
                 if href:
                     if not href.startswith('http'):
                         href = urljoin(site['url'], href)
                     
-                    # More flexible filtering - look for news articles
-                    if (site['name'].lower().replace(' ', '') in href.lower() or 
-                        'news' in href.lower() or 'local' in href.lower()) and \
+                    # More flexible filtering - look for news articles, including KUOW's '/stories/' pattern
+                    if (site['name'].lower().replace(' ', '') in href.lower() or
+                        any(keyword in href.lower() for keyword in ['news', 'local', 'stories'])) and \
                        len(href.split('/')) > 4 and \
                        not any(skip in href.lower() for skip in ['video', 'photo', 'gallery', 'rss', 'feed']):
                         article_urls.add(href)
@@ -636,11 +638,16 @@ class RSSFeedScraper(BaseScraper):
     def __init__(self, config: ScrapingConfig, session: requests.Session):
         super().__init__(config, session)
         self.rss_feeds = [
-            ("https://www.seattletimes.com/seattle-news/feed/", "Seattle Times RSS"),
+            ("https://www.seattletimes.com/seattle-news/feed/", "Seattle Times"),
             ("https://www.king5.com/feeds/syndication/rss/news/local", "KING 5"),
+            ("https://komonews.com/news/local.rss", "KOMO News"),
+            ("https://www.kiro7.com/arc/outboundfeeds/rss/category/news/local/?outputType=xml", "KIRO 7"),
+            ("https://www.kuow.org/feeds/news.xml", "KUOW"),
+            ("https://www.thestranger.com/rss.xml", "The Stranger"),
+            ("https://www.capitolhillseattle.com/feed/", "Capitol Hill Seattle")
         ]
 
-    def scrape(self, query: str = None) -> List[Dict]:
+    def scrape(self) -> List[Dict]:
         """Scan all articles from all RSS feeds, not just those matching a query."""
         results = []
         seen_urls = set()
@@ -650,17 +657,16 @@ class RSSFeedScraper(BaseScraper):
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     'Accept': 'application/rss+xml, application/xml, text/xml'
                 }
+                feed = None
                 try:
                     response = self.session.get(rss_url, headers=headers, timeout=self.config.request_timeout)
-                    if response.status_code == 200:
-                        feed = feedparser.parse(response.content)
-                    else:
-                        self.logger.debug(f"RSS {source_name} returned status {response.status_code}")
-                        feed = feedparser.parse(rss_url)
+                    response.raise_for_status()  # Will raise HTTPError for bad responses (4xx or 5xx)
+                    feed = feedparser.parse(response.content)
                 except Exception as e:
-                    self.logger.debug(f"RSS {source_name} request failed: {e}")
+                    self.logger.warning(f"RSS request for {source_name} failed with session ({e}). Falling back to feedparser direct.")
                     feed = feedparser.parse(rss_url)
-                if len(feed.entries) > 0:
+
+                if feed and len(feed.entries) > 0:
                     self.logger.info(f"RSS {source_name}: {len(feed.entries)} entries")
                 else:
                     self.logger.debug(f"RSS {source_name}: {len(feed.entries)} entries")
@@ -753,7 +759,7 @@ def get_recent_wayback_urls(base_url: str, limit: int = 5) -> List[str]:
 
 # Alternative simple scraper for Seattle Times
 class SimpleSeattleTimesScraper(BaseScraper):
-    def scrape(self, query: str) -> List[Dict]:
+    def scrape(self) -> List[Dict]:
         results = []
         try:
             # Try direct RSS approach first
@@ -791,7 +797,7 @@ class SimpleSeattleTimesScraper(BaseScraper):
                     
                     # Look for article links in archived page - more permissive
                     links = soup.find_all('a', href=True)
-                    for a in links[:50]:  # Check more links
+                    for a in links:  # Check all links, not just the first 50
                         href = a['href']
                         # Fix malformed Wayback URLs
                         if href.startswith('/web/'):
@@ -859,13 +865,13 @@ def test_scraper_debug():
     # Test simple Seattle Times scraper
     print("\nTesting Simple Seattle Times scraper...")
     simple_st = SimpleSeattleTimesScraper(config, session)
-    simple_results = simple_st.scrape("mayor")
+    simple_results = simple_st.scrape()
     print(f"Simple scraper found {len(simple_results)} articles")
     
     # Test RSS scraper
     print("\nTesting RSS scraper...")
     rss_scraper = RSSFeedScraper(config, session)
-    rss_results = rss_scraper.scrape("mayor")
+    rss_results = rss_scraper.scrape()
     print(f"RSS scraper found {len(rss_results)} articles")
     if rss_results:
         sample = rss_results[0]
@@ -881,7 +887,7 @@ def main():
         StrangerScraper(config, session),
         CHSScraper(config, session),
         RSSFeedScraper(config, session),
-        WebScrapingScraper(config, session),
+        WebScrapingScraper(config, session), # This is now more effective
         SimpleSeattleTimesScraper(config, session)  # Only one Seattle Times scraper
     ]
     
@@ -890,7 +896,7 @@ def main():
     for scraper in scrapers:
         try:
             logger.info(f"Running {scraper.__class__.__name__}...")
-            results = scraper.scrape("mayor")
+            results = scraper.scrape()
             
             # Process and validate results
             processed_results = []
