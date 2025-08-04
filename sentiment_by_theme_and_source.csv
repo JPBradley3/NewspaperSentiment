@@ -1,0 +1,19 @@
+"source","category","articles","avg_sentiment"
+"Capitol Hill Seattle","Politics & Governance",10,-0.00229019882756845
+"Capitol Hill Seattle","Core Urban Issues",9,-0.0700437881949763
+"Capitol Hill Seattle","Civic Mechanics",5,-0.074973949392554
+"KING 5","Politics & Governance",2,-0.8125
+"KING 5","Civic Mechanics",1,-1
+"KING 5","Core Urban Issues",7,-1.48666666666667
+"KIRO 7","Civic Mechanics",18,-0.629611290262341
+"KIRO 7","Politics & Governance",12,-0.77645750803865
+"KIRO 7","Core Urban Issues",8,-1.06504221918232
+"KOMO News","Civic Mechanics",1,-0.0714285714285714
+"KOMO News","Politics & Governance",2,-0.178678678678679
+"KOMO News","Core Urban Issues",7,-0.952626579631927
+"Seattle Times (Simple)","Civic Mechanics",1,-0.0666666666666667
+"Seattle Times (Simple)","Politics & Governance",2,-0.696296296296296
+"Seattle Times (Simple)","Core Urban Issues",6,-0.794628073451603
+"The Stranger","Politics & Governance",16,0.213020914919036
+"The Stranger","Core Urban Issues",19,0.103904136988542
+"The Stranger","Civic Mechanics",14,0.103285568513693

@@ -16,11 +16,25 @@ cat("Reading:", latest_file, "\n")
 
 news_data <- read.csv(latest_file, stringsAsFactors = FALSE)
 
-# Define Seattle political candidates/officials
-candidates <- c(
-  "harrell", "bruce", "davison", "juarez", "lewis", "morales", 
-  "mosqueda", "nelson", "pedersen", "sawant", "strauss", "herbold",
-  "gonzalez", "oliver", "foster", "chan", "thomas-kennedy"
+# Define Seattle political candidates/officials with full names and search terms
+# This ensures we group data correctly (e.g., "bruce" and "harrell" map to "Bruce Harrell")
+candidates_df <- tibble::tribble(
+  ~full_name, ~search_terms,
+  "Bruce Harrell",         c("harrell", "bruce harrell"),
+  "Ann Davison",           c("davison", "ann davison"),
+  "Debora Juarez",         c("juarez", "debora juarez"),
+  "Andrew Lewis",          c("lewis", "andrew lewis"),
+  "Tammy Morales",         c("morales", "tammy morales"),
+  "Teresa Mosqueda",       c("mosqueda", "teresa mosqueda"),
+  "Sara Nelson",           c("nelson", "sara nelson"),
+  "Alex Pedersen",         c("pedersen", "alex pedersen"),
+  "Kshama Sawant",         c("sawant", "kshama sawant"),
+  "Dan Strauss",           c("strauss", "dan strauss"),
+  "Lisa Herbold",          c("herbold", "lisa herbold"),
+  "Lorena Gonzalez",       c("gonzalez", "lorena gonzalez"),
+  "Nikkita Oliver",        c("oliver", "ntikkela oliver", "nikkita oliver"),
+  "Nicole Thomas-Kennedy", c("thomas-kennedy", "nicole thomas-kennedy"),
+  "Katie Wilson",          c("wilson", "katie wilson")
 )
 
 # Clean text data
@@ -33,22 +47,32 @@ news_clean <- news_data %>%
   filter(nchar(text) > 50)
 
 # Find articles mentioning each candidate
-candidate_articles <- map_dfr(candidates, function(candidate) {
+candidate_articles <- purrr::pmap_dfr(candidates_df, function(full_name, search_terms) {
+  # Create a regex pattern to match any of the search terms as whole words
+  search_pattern <- paste0("\\b(", paste(search_terms, collapse = "|"), ")\\b")
+  
   news_clean %>%
-    filter(grepl(candidate, text, ignore.case = TRUE)) %>%
-    mutate(candidate = candidate)
+    # Filter rows where 'text' contains any of the search terms
+    filter(grepl(search_pattern, text, ignore.case = TRUE)) %>%
+    # Assign the clean, full name to the matching articles
+    mutate(candidate = full_name)
 })
 
 # Extract sentences mentioning candidates
 candidate_sentences <- candidate_articles %>%
+  # Re-join with the candidates_df to get the search_terms for each candidate
+  left_join(candidates_df, by = c("candidate" = "full_name")) %>%
   mutate(
     sentences = str_split(text, "\\. "),
-    candidate_sentences = map2(sentences, candidate, function(sents, cand) {
-      sents[grepl(cand, sents, ignore.case = TRUE)]
+    candidate_sentences = map2(sentences, search_terms, function(sents, terms) {
+      # Create a pattern for the specific terms for this candidate
+      search_pattern <- paste0("\\b(", paste(terms, collapse = "|"), ")\\b")
+      # Filter sentences that contain any of the search terms
+      sents[grepl(search_pattern, sents, ignore.case = TRUE)]
     })
   ) %>%
   unnest(candidate_sentences) %>%
-  select(source, candidate, candidate_sentences, title, url)
+  select(source, candidate, candidate_sentences, title, url) # search_terms is no longer needed
 
 # Tokenize and get sentiment for candidate mentions
 candidate_sentiment <- candidate_sentences %>%
@@ -72,7 +96,7 @@ candidate_source_summary <- candidate_sentiment %>%
     total_sentiment = sum(sentiment_score),
     .groups = "drop"
   ) %>%
-  filter(articles >= 2) %>%  # Only candidates with 2+ mentions
+  filter(articles >= 1) %>%  # Show candidates with at least 1 mention
   arrange(candidate, desc(avg_sentiment))
 
 # Overall candidate sentiment across all sources
@@ -84,7 +108,7 @@ candidate_overall <- candidate_sentiment %>%
     sources = n_distinct(source),
     .groups = "drop"
   ) %>%
-  filter(total_articles >= 3) %>%
+  filter(total_articles >= 1) %>% # Show candidates with at least 1 mention overall
   arrange(desc(avg_sentiment))
 
 # Print results
@@ -93,6 +117,37 @@ print(candidate_source_summary)
 
 cat("\n=== OVERALL CANDIDATE SENTIMENT ===\n")
 print(candidate_overall)
+
+# --- NEW SECTION: Overall source sentiment on candidates ---
+source_candidate_summary <- candidate_sentiment %>%
+  group_by(source) %>%
+  summarise(
+    total_articles = n_distinct(url),
+    avg_sentiment = mean(avg_sentiment),
+    .groups = "drop"
+  ) %>%
+  filter(total_articles >= 2) %>% # Filter sources with few articles
+  arrange(desc(avg_sentiment))
+
+cat("\n=== OVERALL SOURCE SENTIMENT ON CANDIDATES ===\n")
+print(source_candidate_summary)
+
+# Visualization: Overall source sentiment on candidates
+if(nrow(source_candidate_summary) > 0) {
+  p3 <- ggplot(source_candidate_summary, aes(x = reorder(source, avg_sentiment), y = avg_sentiment, fill = avg_sentiment > 0)) +
+    geom_col() +
+    coord_flip() +
+    scale_fill_manual(values = c("red", "blue"), guide = "none") +
+    labs(
+      title = "Overall News Source Sentiment in Candidate Coverage",
+      x = "News Source",
+      y = "Average Sentiment Score",
+      caption = "Based on all articles mentioning any listed candidate."
+    ) +
+    theme_minimal()
+
+  print(p3)
+}
 
 # Visualization: Candidate sentiment by source
 if(nrow(candidate_source_summary) > 0) {
@@ -131,6 +186,7 @@ if(nrow(candidate_source_summary) > 0) {
 # Save results
 write.csv(candidate_source_summary, "candidate_sentiment_by_source.csv", row.names = FALSE)
 write.csv(candidate_overall, "candidate_sentiment_overall.csv", row.names = FALSE)
+write.csv(source_candidate_summary, "source_sentiment_on_candidates.csv", row.names = FALSE)
 write.csv(candidate_sentiment, "detailed_candidate_sentiment.csv", row.names = FALSE)
 
-cat("\nResults saved to candidate_sentiment_by_source.csv, candidate_sentiment_overall.csv, and detailed_candidate_sentiment.csv\n")
+cat("\nResults saved to candidate_sentiment_by_source.csv, candidate_sentiment_overall.csv, source_sentiment_on_candidates.csv, and detailed_candidate_sentiment.csv\n")

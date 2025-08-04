@@ -94,8 +94,20 @@ def create_session(config: ScrapingConfig) -> requests.Session:
 # Enhanced Keywords with Weighting
 RELEVANCE_KEYWORDS = {
     "high": [
+        # General political terms
         "mayor", "mayoral", "city council", "councilmember", "councilwoman", "councilman",
-        "seattle politics", "election", "candidate", "municipal", "governance"
+        "seattle politics", "election", "candidate", "municipal", "governance",
+
+        # Specific Seattle candidates/officials (from candidate_sentiment_analysis.r)
+        "harrell", "bruce", "davison", "juarez", "lewis", "morales", "mosqueda", "nelson",
+        "pedersen", "sawant", "strauss", "herbold", "gonzalez", "oliver", "foster", "chan",
+        "thomas-kennedy", "wilson",
+
+        # Full names for better matching
+        "bruce harrell", "ann davison", "debora juarez", "andrew lewis", "tammy morales",
+        "teresa mosqueda", "sara nelson", "alex pedersen", "kshama sawant", "dan strauss",
+        "lisa herbold", "lorena gonzalez", "ntikkela oliver", "nicole thomas-kennedy",
+        "katie wilson"
     ],
     "medium": [
         "budget", "housing", "homeless", "homelessness", "transportation", "zoning", 
@@ -131,9 +143,8 @@ def check_relevance_weighted(title: str, content: str) -> tuple[bool, List[str],
                 matches.append(f"{keyword} (title)")
                 score += weights[weight_level] * 0.5  # 50% bonus for title matches
     
-    # Extremely permissive threshold to catch all articles
-    is_relevant = True  # Accept all articles for now
-    # Original: score >= 0.5 or len(matches) > 0 or any(keyword in text for keyword in ['seattle', 'city', 'local', 'news'])
+    # An article is relevant if it has any matching keywords.
+    is_relevant = score > 0
     return is_relevant, matches, score
 
 # Data Validation Classes
