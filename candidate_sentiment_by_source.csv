@@ -1,11 +1,21 @@
-"candidate","source","articles","avg_sentiment","total_sentiment"
-"Ann Davison","The Stranger",4,0.0550499093291976,-86
-"Bruce Harrell","The Stranger",10,0.135993662988397,-85
-"Bruce Harrell","Capitol Hill Seattle",9,-0.0810656264296635,-35
-"Katie Wilson","The Stranger",4,0.392903444682733,-93
-"Katie Wilson","Capitol Hill Seattle",5,0.132742993440668,11
-"Nikkita Oliver","The Stranger",2,-0.229344625786049,-138
-"Sara Nelson","Capitol Hill Seattle",3,0.149762329174094,18
-"Sara Nelson","The Stranger",9,0.0674060387068517,-15
-"Tammy Morales","The Stranger",2,0.267923133776792,-88
-"Teresa Mosqueda","The Stranger",2,0.367923133776792,-92
+"source","candidate","articles","avg_sentiment"
+"KING 5","Chan",1,0.5
+"KIRO 7","Chan",7,-0.332862431064441
+"KIRO 7","Harrell",1,0.791666666666667
+"KIRO 7","Nelson",1,0
+"KIRO 7","Wilson",1,0.8
+"KOMO News","Chan",1,-1
+"KOMO News","Foster",1,0
+"KUOW","Chan",12,-0.194444444444444
+"KUOW","Wilson",1,1.66666666666667
+"Seattle Times (Simple)","Harrell",1,-0.705882352941177
+"Seattle Times (Simple)","Nelson",1,-0.5
+"Seattle Times (Simple)","Wilson",1,-0.6
+"The Stranger (Web)","Chan",2,-0.814002828854314
+"The Stranger (Web)","Davison",1,-1.25581395348837
+"The Stranger (Web)","Harrell",16,0.0169061063094725
+"The Stranger (Web)","Lewis",1,-0.107981220657277
+"The Stranger (Web)","Morales",2,-0.647727272727273
+"The Stranger (Web)","Mosqueda",1,0.866666666666667
+"The Stranger (Web)","Nelson",3,0.283549783549784
+"The Stranger (Web)","Wilson",1,0.372340425531915

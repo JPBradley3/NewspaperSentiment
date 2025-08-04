@@ -32,6 +32,13 @@ news_data <- news_data %>%
   filter(title != "", content != "") %>%
   # Remove duplicate articles based on title and source
   distinct(title, source, .keep_all = TRUE) %>%
+  # Standardize source names to handle variations
+  mutate(source = case_when(
+    str_detect(tolower(source), "kuow") ~ "KUOW",
+    TRUE ~ source
+  )) %>%
+  # Remove duplicates again after source standardization
+  distinct(title, source, .keep_all = TRUE) %>%
   # Ensure URL column exists and handle missing URLs
   mutate(url = if_else(is.na(url) | url == "", paste0("missing_url_", row_number()), url))
 
@@ -78,7 +85,7 @@ cat("\n=== SENTIMENT ANALYSIS BY NEWS SOURCE ===\n")
 print(source_sentiment)
 
 # Create visualization
-p1 <- ggplot(source_sentiment, aes(x = reorder(source, avg_sentiment), y = avg_sentiment)) +
+source_sentiment_plot <- ggplot(source_sentiment, aes(x = reorder(source, avg_sentiment), y = avg_sentiment)) +
   geom_col(aes(fill = avg_sentiment > 0)) +
   coord_flip() +
   scale_fill_manual(values = c("red", "blue"), guide = "none") +
@@ -90,7 +97,13 @@ p1 <- ggplot(source_sentiment, aes(x = reorder(source, avg_sentiment), y = avg_s
   ) +
   theme_minimal()
 
-print(p1)
+print(source_sentiment_plot)
+tryCatch({
+  ggsave("source_sentiment_plot.png", source_sentiment_plot, width = 10, height = 6)
+  cat("Saved source_sentiment_plot.png\n")
+}, error = function(e) {
+  cat("Error saving plot:", e$message, "\n")
+})
 
 # Most positive and negative articles by source
 extreme_articles <- sentiment_scores %>%
@@ -105,6 +118,72 @@ extreme_articles <- sentiment_scores %>%
 
 cat("\n=== MOST POSITIVE/NEGATIVE ARTICLES BY SOURCE ===\n")
 print(extreme_articles %>% select(source, title, avg_sentiment))
+
+# --- CANDIDATE SENTIMENT HEATMAP ---
+
+# Define candidate names
+candidates <- c("harrell", "davison", "juarez", "lewis", "morales", "mosqueda", 
+                "nelson", "pedersen", "sawant", "strauss", "herbold", "gonzalez", 
+                "oliver", "foster", "chan", "thomas-kennedy", "wilson")
+
+# Create candidate sentiment by source
+candidate_sentiment <- sentiment_scores %>%
+  left_join(news_data %>% select(url, matched_keywords), by = "url") %>%
+  mutate(keywords_clean = tolower(gsub("\\[|\\]|'|\\s*\\(title\\)", "", matched_keywords))) %>%
+  filter(str_detect(keywords_clean, paste(candidates, collapse = "|")) & !is.na(keywords_clean)) %>%
+  mutate(
+    candidate = case_when(
+      str_detect(keywords_clean, "harrell") ~ "Harrell",
+      str_detect(keywords_clean, "davison") ~ "Davison",
+      str_detect(keywords_clean, "juarez") ~ "Juarez",
+      str_detect(keywords_clean, "lewis") ~ "Lewis",
+      str_detect(keywords_clean, "morales") ~ "Morales",
+      str_detect(keywords_clean, "mosqueda") ~ "Mosqueda",
+      str_detect(keywords_clean, "nelson") ~ "Nelson",
+      str_detect(keywords_clean, "pedersen") ~ "Pedersen",
+      str_detect(keywords_clean, "sawant") ~ "Sawant",
+      str_detect(keywords_clean, "strauss") ~ "Strauss",
+      str_detect(keywords_clean, "herbold") ~ "Herbold",
+      str_detect(keywords_clean, "gonzalez") ~ "Gonzalez",
+      str_detect(keywords_clean, "oliver") ~ "Oliver",
+      str_detect(keywords_clean, "foster") ~ "Foster",
+      str_detect(keywords_clean, "chan") ~ "Chan",
+      str_detect(keywords_clean, "thomas-kennedy") ~ "Thomas-Kennedy",
+      str_detect(keywords_clean, "wilson") ~ "Wilson"
+    )
+  ) %>%
+  filter(!is.na(candidate)) %>%
+  group_by(source, candidate) %>%
+  summarise(
+    articles = n(),
+    avg_sentiment = mean(avg_sentiment),
+    .groups = "drop"
+  )
+
+# Create heatmap
+candidate_heatmap <- ggplot(candidate_sentiment, aes(x = candidate, y = source, fill = avg_sentiment)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "red", mid = "white", high = "blue", midpoint = 0) +
+  labs(
+    title = "Candidate Sentiment by News Source",
+    x = "Candidate",
+    y = "News Source",
+    fill = "Avg Sentiment"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(candidate_heatmap)
+tryCatch({
+  ggsave("candidate_sentiment_heatmap.png", candidate_heatmap, width = 12, height = 6)
+  cat("Saved candidate_sentiment_heatmap.png\n")
+}, error = function(e) {
+  cat("Error saving candidate heatmap:", e$message, "\n")
+})
+
+# Save candidate sentiment data
+write.csv(candidate_sentiment, "candidate_sentiment_by_source.csv", row.names = FALSE)
+cat("Candidate sentiment data saved to candidate_sentiment_by_source.csv\n")
 
 # Save results
 write.csv(source_sentiment, "sentiment_by_source.csv", row.names = FALSE)
@@ -175,7 +254,7 @@ print(thematic_sentiment)
 
 if (nrow(thematic_sentiment) > 0) {
   # Create a faceted plot to show thematic sentiment stratified by newspaper
-  p2 <- ggplot(thematic_sentiment, aes(x = avg_sentiment, y = reorder_within(category, avg_sentiment, source), fill = avg_sentiment > 0)) +
+  thematic_sentiment_plot <- ggplot(thematic_sentiment, aes(x = avg_sentiment, y = reorder_within(category, avg_sentiment, source), fill = avg_sentiment > 0)) +
     geom_col() +
     facet_wrap(~source, scales = "free") + # Create a plot for each newspaper
     scale_y_reordered() +
@@ -189,7 +268,13 @@ if (nrow(thematic_sentiment) > 0) {
     theme_minimal() +
     theme(strip.text = element_text(face = "bold"))
 
-  print(p2)
+  print(thematic_sentiment_plot)
+  tryCatch({
+    ggsave("thematic_sentiment_plot.png", thematic_sentiment_plot, width = 12, height = 8)
+    cat("Saved thematic_sentiment_plot.png\n")
+  }, error = function(e) {
+    cat("Error saving thematic plot:", e$message, "\n")
+  })
 }
 
 # Save thematic results
