@@ -18,6 +18,23 @@ cat("Reading:", latest_file, "\n")
 # Load data
 news_data <- read.csv(latest_file, stringsAsFactors = FALSE)
 
+# Tidy the data
+news_data <- news_data %>%
+  # Remove rows with missing essential data
+  filter(!is.na(title), !is.na(content), !is.na(source)) %>%
+  # Clean whitespace and empty strings
+  mutate(
+    title = str_trim(title),
+    content = str_trim(content),
+    source = str_trim(source)
+  ) %>%
+  # Remove rows where title or content are empty after trimming
+  filter(title != "", content != "") %>%
+  # Remove duplicate articles based on title and source
+  distinct(title, source, .keep_all = TRUE) %>%
+  # Ensure URL column exists and handle missing URLs
+  mutate(url = if_else(is.na(url) | url == "", paste0("missing_url_", row_number()), url))
+
 # Clean and prepare text data
 news_clean <- news_data %>%
   mutate(
