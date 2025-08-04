@@ -323,7 +323,7 @@ class SeattleTimesScraper(BaseScraper):
                     article_data = self.extract_article_content(url, selectors)
                     if article_data and self._is_relevant(article_data):
                         article_data['url'] = url
-                        article_data['source'] = 'Seattle Times'
+                        article_data['source'] = 'Seattle Times (Web)'
                         results.append(article_data)
                     
                     time.sleep(self.config.delay_between_requests)
@@ -426,7 +426,7 @@ class StrangerScraper(BaseScraper):
                     len(article_data.get('content', '')) > self.config.min_content_length and 
                     self._is_relevant(article_data)):
                     article_data['url'] = url
-                    article_data['source'] = 'The Stranger'
+                    article_data['source'] = 'The Stranger (Web)'
                     results.append(article_data)
                 time.sleep(self.config.delay_between_requests)
         except Exception as e:
@@ -467,9 +467,7 @@ class CHSScraper(BaseScraper):
             }
             for url in article_links[:self.config.max_articles_per_source]:
                 article_data = self.extract_article_content(url, selectors)
-                if (article_data and 
-                    len(article_data.get('content', '')) > self.config.min_content_length and 
-                    self._is_relevant(article_data)):
+                if article_data:  # Remove strict filtering for CHS
                     article_data['url'] = url
                     article_data['source'] = 'Capitol Hill Seattle'
                     results.append(article_data)
@@ -480,8 +478,8 @@ class CHSScraper(BaseScraper):
 
     def _find_chs_articles(self, base_url: str) -> List[str]:
         article_links = set()
-        # Add pagination to scrape multiple pages - increased depth
-        for page_num in range(1, 6):  # Scrape first 5 pages
+        # Add pagination to scrape multiple pages - increased depth significantly
+        for page_num in range(1, 11):  # Scrape first 10 pages
             if page_num == 1:
                 url = base_url
             else:
@@ -489,24 +487,25 @@ class CHSScraper(BaseScraper):
             
             self.logger.info(f"Scraping CHS page: {url}")
             try:
-                response = self.session.get(url, timeout=self.config.request_timeout)
+                # Add Referer header to appear more like a user from a search engine
+                headers = {'Referer': 'https://www.google.com/'}
+                response = self.session.get(url, headers=headers, timeout=self.config.request_timeout)
                 if response.status_code != 200:
                     self.logger.warning(f"CHS page {url} returned status {response.status_code}, stopping pagination.")
                     break
                 
                 soup = BeautifulSoup(response.text, "html.parser")
+                # Use broader selectors to catch more article links
                 links = soup.find_all('a', href=True)
-                
                 found_on_page = 0
                 for a in links:
-                    href = a['href']
-                    if ('capitolhillseattle.com' in href and 
-                        any(year in href for year in ['/2025/', '/2024/']) and 
+                    href = a.get('href')
+                    if (href and 'capitolhillseattle.com' in href and 
                         len(href.split('/')) > 4 and
-                        'share=' not in href and
-                        '#' not in href):
-                        article_links.add(href)
-                        found_on_page += 1
+                        not any(skip in href for skip in ['#', '?', 'tag/', 'category/', 'author/'])):
+                        if href not in article_links:
+                            article_links.add(href)
+                            found_on_page += 1
                 
                 self.logger.info(f"Found {found_on_page} new article links on CHS page {page_num}")
                 
@@ -514,6 +513,7 @@ class CHSScraper(BaseScraper):
                     self.logger.info(f"Reached max articles ({self.config.max_articles_per_source}) for CHS. Stopping.")
                     break
 
+                # If the specific selector finds no links, it's a good sign we're at the end.
                 if found_on_page == 0 and page_num > 1:
                     self.logger.info("No new links found, stopping CHS pagination.")
                     break
@@ -521,8 +521,9 @@ class CHSScraper(BaseScraper):
                 time.sleep(self.config.delay_between_requests)
 
             except Exception as e:
-                self.logger.error(f"Error finding CHS articles on page {page_num}: {e}")
-                break  # Stop if a page fails
+                # Make the scraper more resilient. If one page fails, log it and continue to the next.
+                self.logger.error(f"Error finding CHS articles on page {page_num}: {e}. Continuing to next page.")
+                continue
 
         self.logger.info(f"Found {len(article_links)} CHS article links")
         return list(article_links)
@@ -594,26 +595,33 @@ class WebScrapingScraper(BaseScraper):
         articles = []
         
         try:
-            # Get the main page
-            response = self.session.get(site['url'], timeout=self.config.request_timeout)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Find article links - use broader selectors
-            links = soup.find_all('a', href=True)
             article_urls = set()
-            
-            for link in links:  # Check all links, not just the first 50
-                href = link.get('href')
-                if href:
-                    if not href.startswith('http'):
-                        href = urljoin(site['url'], href)
-                    
-                    # More flexible filtering - look for news articles, including KUOW's '/stories/' pattern
-                    if (site['name'].lower().replace(' ', '') in href.lower() or
-                        any(keyword in href.lower() for keyword in ['news', 'local', 'stories'])) and \
-                       len(href.split('/')) > 4 and \
-                       not any(skip in href.lower() for skip in ['video', 'photo', 'gallery', 'rss', 'feed']):
-                        article_urls.add(href)
+            # Special handling for KUOW API, which is more reliable than parsing JS-heavy pages
+            if site['name'] == 'KUOW':
+                api_url = "https://www.kuow.org/api/v1/news?page=1"
+                self.logger.info(f"Using API for KUOW: {api_url}")
+                response = self.session.get(api_url, timeout=self.config.request_timeout)
+                response.raise_for_status()
+                api_data = response.json()
+                
+                for story in api_data.get('stories', []):
+                    permalink = story.get('permalink')
+                    if permalink:
+                        full_url = urljoin("https://www.kuow.org", permalink)
+                        article_urls.add(full_url)
+            else:
+                # Get the main page for other sites
+                response = self.session.get(site['url'], timeout=self.config.request_timeout)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                links = soup.find_all('a', href=True)
+                for link in links:
+                    href = link.get('href')
+                    if href:
+                        if not href.startswith('http'):
+                            href = urljoin(site['url'], href)
+                        if (site['name'].lower().replace(' ', '') in href.lower() or any(keyword in href.lower() for keyword in ['news', 'local', 'stories'])) and len(href.split('/')) > 4 and not any(skip in href.lower() for skip in ['video', 'photo', 'gallery', 'rss', 'feed']):
+                            article_urls.add(href)
             
             self.logger.info(f"Found {len(article_urls)} potential article URLs for {site['name']}")
             
@@ -642,7 +650,11 @@ class RSSFeedScraper(BaseScraper):
             ("https://www.king5.com/feeds/syndication/rss/news/local", "KING 5"),
             ("https://komonews.com/news/local.rss", "KOMO News"),
             ("https://www.kiro7.com/arc/outboundfeeds/rss/category/news/local/?outputType=xml", "KIRO 7"),
-            ("https://www.kuow.org/feeds/news.xml", "KUOW"),
+            ("https://www.kuow.org/rss.xml", "KUOW (News)"),
+            ("http://www.kuow.org/feeds/podcasts/morning-edition/podcasts/rss.xml", "KUOW (Morning Edition)"),
+            ("https://www.kuow.org/feeds/podcasts/all-things-considered/podcasts/rss.xml", "KUOW (All Things Considered)"),
+            ("http://www.kuow.org/feeds/podcasts/weekend-edition-saturday/podcasts/rss.xml", "KUOW (Weekend Edition Sat)"),
+            ("http://www.kuow.org/feeds/podcasts/weekendedition-sunday/podcasts/rss.xml", "KUOW (Weekend Edition Sun)"),
             ("https://www.thestranger.com/rss.xml", "The Stranger"),
             ("https://www.capitolhillseattle.com/feed/", "Capitol Hill Seattle")
         ]

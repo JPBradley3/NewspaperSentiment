@@ -6,11 +6,17 @@ import requests
 
 def test_rss_feeds():
     feeds = [
-        ("https://www.kuow.org/feeds/news.rss", "KUOW"),
+        ("https://www.kuow.org/rss.xml", "KUOW (News)"),
+        ("http://www.kuow.org/feeds/podcasts/morning-edition/podcasts/rss.xml", "KUOW (Morning Edition)"),
+        ("https://www.kuow.org/feeds/podcasts/all-things-considered/podcasts/rss.xml", "KUOW (All Things Considered)"),
+        ("http://www.kuow.org/feeds/podcasts/weekend-edition-saturday/podcasts/rss.xml", "KUOW (Weekend Edition Sat)"),
+        ("http://www.kuow.org/feeds/podcasts/weekendedition-sunday/podcasts/rss.xml", "KUOW (Weekend Edition Sun)"),
         ("https://www.seattletimes.com/seattle-news/feed/", "Seattle Times RSS"),
-        ("https://www.kiro7.com/arcio/rss/category/news/local/?outputType=xml", "KIRO 7"),
-        ("https://rss.king5.com/", "KING 5"),
-        ("https://komonews.com/rss.xml", "KOMO News"),
+        ("https://www.kiro7.com/arc/outboundfeeds/rss/category/news/local/?outputType=xml", "KIRO 7"),
+        ("https://www.king5.com/feeds/syndication/rss/news/local", "KING 5"),
+        ("https://komonews.com/news/local.rss", "KOMO News"),
+        ("https://www.thestranger.com/rss.xml", "The Stranger"),
+        ("https://www.capitolhillseattle.com/feed/", "Capitol Hill Seattle"),
     ]
     
     headers = {
@@ -21,7 +27,8 @@ def test_rss_feeds():
     for url, name in feeds:
         try:
             print(f"\nTesting {name}: {url}")
-            response = requests.get(url, headers=headers, timeout=10)
+            # Increased timeout for slow servers like KING 5
+            response = requests.get(url, headers=headers, timeout=20)
             print(f"  Status: {response.status_code}")
             
             if response.status_code == 200:
@@ -29,6 +36,8 @@ def test_rss_feeds():
                 print(f"  Entries: {len(feed.entries)}")
                 if feed.entries:
                     print(f"  Sample title: {feed.entries[0].get('title', 'No title')[:60]}...")
+            elif response.status_code == 202:
+                print(f"  Warning: HTTP {response.status_code} (Accepted). The server may be rate-limiting.")
             else:
                 print(f"  Error: HTTP {response.status_code}")
                 
