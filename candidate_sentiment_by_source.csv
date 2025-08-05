@@ -1,21 +1,24 @@
 "source","candidate","articles","avg_sentiment"
-"KING 5","Chan",1,0.5
-"KIRO 7","Chan",7,-0.332862431064441
-"KIRO 7","Harrell",1,0.791666666666667
-"KIRO 7","Nelson",1,0
-"KIRO 7","Wilson",1,0.8
-"KOMO News","Chan",1,-1
-"KOMO News","Foster",1,0
-"KUOW","Chan",12,-0.194444444444444
-"KUOW","Wilson",1,1.66666666666667
-"Seattle Times (Simple)","Harrell",1,-0.705882352941177
-"Seattle Times (Simple)","Nelson",1,-0.5
-"Seattle Times (Simple)","Wilson",1,-0.6
-"The Stranger (Web)","Chan",2,-0.814002828854314
-"The Stranger (Web)","Davison",1,-1.25581395348837
-"The Stranger (Web)","Harrell",16,0.0169061063094725
-"The Stranger (Web)","Lewis",1,-0.107981220657277
-"The Stranger (Web)","Morales",2,-0.647727272727273
-"The Stranger (Web)","Mosqueda",1,0.866666666666667
-"The Stranger (Web)","Nelson",3,0.283549783549784
-"The Stranger (Web)","Wilson",1,0.372340425531915
+"Capitol Hill Seattle","Harrell",2,-1.87777777777778
+"KIRO 7","Bliss",4,-0.28360850031697
+"KIRO 7","Davison",3,-0.74584229390681
+"KIRO 7","Gonzalez",12,-0.794859307359307
+"KIRO 7","Harrell",2,-0.169384057971014
+"KIRO 7","Nelson",2,-0.0909090909090909
+"KIRO 7","Sawant",1,-1.41666666666667
+"KIRO 7","Wilson",12,1.10513833992095
+"KOMO News","Davison",1,-0.425
+"KUOW (Weekend Edition Sat)","Wilson",1,1.66666666666667
+"Seattle Times (Simple)","Davison",1,0.488054607508532
+"Seattle Times (Simple)","Nelson",1,-2
+"Seattle Times (Simple)","Wilson",2,1.24025974025974
+"The Stranger","Davison",2,-1.21689002759164
+"The Stranger","Gonzalez",1,-0.6
+"The Stranger","Harrell",27,-0.0428784864080261
+"The Stranger","Nelson",8,-0.203683035714286
+"The Stranger","Wilson",2,0.592420212765957
+"The Stranger (Web)","Davison",2,-1.21689002759164
+"The Stranger (Web)","Gonzalez",1,-0.6
+"The Stranger (Web)","Harrell",27,-0.0428784864080261
+"The Stranger (Web)","Nelson",8,-0.203683035714286
+"The Stranger (Web)","Wilson",2,0.592420212765957

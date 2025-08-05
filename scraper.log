@@ -1340,3 +1340,16 @@
 2025-08-05 12:09:39,073 - SimpleSeattleTimesScraper - INFO - Trying Wayback Machine for more Seattle Times articles...
 2025-08-05 12:10:34,559 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
 2025-08-05 12:10:49,574 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030142/https://www.seattletimes.com/
+2025-08-05 12:20:13,333 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-05 12:20:34,743 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-05 12:20:53,854 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-05 12:21:13,206 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-05 12:21:32,654 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-05 12:22:06,084 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241001174142/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-05 12:22:12,763 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241001174142/https://www.seattletimes.com/
+2025-08-05 12:22:13,034 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241001174142/https://www.seattletimes.com/
+2025-08-05 12:25:45,749 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241001174142/https://www.seattletimes.com/life/wellness/
+2025-08-05 12:30:00,811 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241001174130/https://www.seattletimes.com/seattle-news/mental-health/
+2025-08-05 12:30:57,713 - __main__ - INFO - SimpleSeattleTimesScraper returned 155 articles
+2025-08-05 12:30:57,917 - __main__ - INFO - Removed 123 duplicates
+2025-08-05 12:30:57,969 - __main__ - INFO - Saved 316 articles to seattle_news_20250805_123057.csv
