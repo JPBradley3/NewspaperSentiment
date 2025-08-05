@@ -98,16 +98,17 @@ RELEVANCE_KEYWORDS = {
         "mayor", "mayoral", "city council", "councilmember", "councilwoman", "councilman",
         "seattle politics", "election", "candidate", "municipal", "governance",
 
-        # Specific Seattle candidates/officials (from candidate_sentiment_analysis.r)
-        "harrell", "bruce", "davison", "juarez", "lewis", "morales", "mosqueda", "nelson",
-        "pedersen", "sawant", "strauss", "herbold", "gonzalez", "oliver", "foster", "chan",
-        "thomas-kennedy", "wilson",
-
-        # Full names for better matching
-        "bruce harrell", "ann davison", "debora juarez", "andrew lewis", "tammy morales",
-        "teresa mosqueda", "sara nelson", "alex pedersen", "kshama sawant", "dan strauss",
-        "lisa herbold", "lorena gonzalez", "ntikkela oliver", "nicole thomas-kennedy",
-        "katie wilson"
+        # 2025 Seattle mayoral candidates
+        "harrell", "bruce harrell", "wilson", "katie wilson", "armstrong", "ry armstrong",
+        "bliss", "clinton bliss", "mallahan", "joe mallahan", "molloy", "joe molloy",
+        "whelan", "thaddeus whelan", "willoughby", "isaiah willoughby", "savage", "rachel savage",
+        
+        # Other Seattle officials/candidates
+        "davison", "ann davison", "juarez", "debora juarez", "lewis", "andrew lewis",
+        "morales", "tammy morales", "mosqueda", "teresa mosqueda", "nelson", "sara nelson",
+        "pedersen", "alex pedersen", "sawant", "kshama sawant", "strauss", "dan strauss",
+        "herbold", "lisa herbold", "gonzalez", "lorena gonzalez", "oliver", "ntikkela oliver",
+        "foster", "chan", "thomas-kennedy", "nicole thomas-kennedy"
     ],
     "medium": [
         "budget", "housing", "homeless", "homelessness", "transportation", "zoning", 

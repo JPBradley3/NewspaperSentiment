@@ -1,11 +1,11 @@
 {
     "max_pages": 1,
-    "max_articles_per_source": 50,
+    "max_articles_per_source": 200,
     "request_timeout": 15,
     "delay_between_requests": 0.1,
     "delay_between_sources": 0.2,
-    "min_content_length": 50,
-    "max_content_length": 2000,
+    "min_content_length": 20,
+    "max_content_length": 7500,
     "use_wayback_fallback": false,
     "max_wayback_attempts": 1
 }
