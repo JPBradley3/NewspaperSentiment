@@ -1353,3 +1353,148 @@
 2025-08-05 12:30:57,713 - __main__ - INFO - SimpleSeattleTimesScraper returned 155 articles
 2025-08-05 12:30:57,917 - __main__ - INFO - Removed 123 duplicates
 2025-08-05 12:30:57,969 - __main__ - INFO - Saved 316 articles to seattle_news_20250805_123057.csv
+2025-08-05 18:57:35,596 - __main__ - INFO - Running StrangerScraper...
+2025-08-05 18:57:36,309 - StrangerScraper - INFO - Found 58 Stranger article links from https://www.thestranger.com/news/
+2025-08-05 18:57:40,433 - StrangerScraper - INFO - Found 17 Stranger article links from https://www.thestranger.com/stranger-election-control-board/
+2025-08-05 19:00:05,200 - __main__ - INFO - StrangerScraper returned 65 articles
+2025-08-05 19:00:05,401 - __main__ - INFO - Running CHSScraper...
+2025-08-05 19:00:05,401 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/
+2025-08-05 19:00:06,459 - CHSScraper - INFO - Found 18 new article links on CHS page 1
+2025-08-05 19:00:06,560 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/page/2/
+2025-08-05 19:00:06,924 - CHSScraper - INFO - Found 0 new article links on CHS page 2
+2025-08-05 19:00:06,925 - CHSScraper - INFO - No new links found, stopping CHS pagination.
+2025-08-05 19:00:06,925 - CHSScraper - INFO - Found 18 CHS article links
+2025-08-05 19:00:16,494 - __main__ - INFO - CHSScraper returned 18 articles
+2025-08-05 19:00:16,695 - __main__ - INFO - Running RSSFeedScraper...
+2025-08-05 19:00:17,043 - RSSFeedScraper - INFO - RSS KING 5: 40 entries
+2025-08-05 19:00:17,177 - RSSFeedScraper - INFO - RSS KOMO News: 41 entries
+2025-08-05 19:00:17,900 - RSSFeedScraper - INFO - RSS KIRO 7: 100 entries
+2025-08-05 19:00:18,226 - RSSFeedScraper - WARNING - RSS request for KUOW (News) failed with session (404 Client Error: Not Found for url: https://www.kuow.org/rss.xml). Falling back to feedparser direct.
+2025-08-05 19:00:18,653 - RSSFeedScraper - INFO - RSS KUOW (Morning Edition): 100 entries
+2025-08-05 19:00:18,926 - RSSFeedScraper - INFO - RSS KUOW (All Things Considered): 100 entries
+2025-08-05 19:00:19,141 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sat): 100 entries
+2025-08-05 19:00:19,355 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sun): 100 entries
+2025-08-05 19:00:19,689 - RSSFeedScraper - WARNING - RSS request for The Stranger failed with session (404 Client Error: Not Found for url: https://www.thestranger.com/rss.xml). Falling back to feedparser direct.
+2025-08-05 19:00:20,303 - RSSFeedScraper - INFO - RSS Capitol Hill Seattle: 5 entries
+2025-08-05 19:00:20,314 - __main__ - INFO - RSSFeedScraper returned 104 articles
+2025-08-05 19:00:20,515 - __main__ - INFO - Running WebScrapingScraper...
+2025-08-05 19:00:20,515 - WebScrapingScraper - INFO - Scraping KIRO 7...
+2025-08-05 19:00:20,917 - WebScrapingScraper - INFO - Found 97 potential article URLs for KIRO 7
+2025-08-05 19:00:22,437 - WebScrapingScraper - WARNING - No content extracted from https://membercenter.kiro7.com/newsletters/
+2025-08-05 19:01:02,847 - WebScrapingScraper - WARNING - Failed to extract from https://www.kiro7.com/weather/dopplerstream: 404 Client Error: Not Found for url: https://www.kiro7.com/weather/kiro-7-pinpoint-stormtracker-radar/63ab6056-a72f-4b51-ba3b-d464ca4679df/. Trying Wayback Machine...
+2025-08-05 19:01:11,080 - WebScrapingScraper - WARNING - No content extracted from https://www.youtube.com/user/KIRO7Seattle
+2025-08-05 19:01:40,637 - WebScrapingScraper - INFO - Extracted 94 articles from KIRO 7
+2025-08-05 19:01:41,193 - WebScrapingScraper - INFO - Scraping KOMO News...
+2025-08-05 19:01:41,377 - WebScrapingScraper - INFO - Found 30 potential article URLs for KOMO News
+2025-08-05 19:01:46,719 - WebScrapingScraper - INFO - Extracted 30 articles from KOMO News
+2025-08-05 19:01:46,918 - WebScrapingScraper - INFO - Scraping KUOW...
+2025-08-05 19:01:46,918 - WebScrapingScraper - INFO - Using API for KUOW: https://www.kuow.org/api/v1/news?page=1
+2025-08-05 19:01:47,108 - WebScrapingScraper - ERROR - Error scraping KUOW: 404 Client Error: Not Found for url: https://www.kuow.org/api/v1/news?page=1
+2025-08-05 19:01:47,109 - WebScrapingScraper - INFO - Extracted 0 articles from KUOW
+2025-08-05 19:01:47,237 - __main__ - INFO - WebScrapingScraper returned 78 articles
+2025-08-05 19:01:47,439 - __main__ - INFO - Running SimpleSeattleTimesScraper...
+2025-08-05 19:01:47,591 - SimpleSeattleTimesScraper - INFO - Trying Wayback Machine for more Seattle Times articles...
+2025-08-05 19:02:20,269 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20250101234156/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-05 19:05:44,284 - SimpleSeattleTimesScraper - WARNING - Failed to extract from http://web.archive.org/web/20250101234156/http://autos.seattletimes.com/: 403 Client Error: Forbidden for url: http://web.archive.org/web/20250101234140/http://autos.seattletimes.com/. Trying Wayback Machine...
+2025-08-05 19:06:29,506 - SimpleSeattleTimesScraper - WARNING - Failed to extract from http://web.archive.org/web/20250101234156/https://autos.seattletimes.com/: 403 Client Error: Forbidden for url: http://web.archive.org/web/20250101234140/http://autos.seattletimes.com/. Trying Wayback Machine...
+2025-08-05 19:06:40,717 - __main__ - INFO - SimpleSeattleTimesScraper returned 82 articles
+2025-08-05 19:06:40,919 - __main__ - INFO - Removed 58 duplicates
+2025-08-05 19:06:40,985 - __main__ - INFO - Saved 289 articles to seattle_news_20250805_190640.csv
+2025-08-05 19:10:08,284 - __main__ - INFO - Running StrangerScraper...
+2025-08-05 19:10:18,423 - StrangerScraper - INFO - Found 58 Stranger article links from https://www.thestranger.com/news/
+2025-08-05 19:10:22,231 - StrangerScraper - INFO - Found 17 Stranger article links from https://www.thestranger.com/stranger-election-control-board/
+2025-08-05 19:10:44,347 - __main__ - INFO - StrangerScraper returned 67 articles
+2025-08-05 19:10:44,548 - __main__ - INFO - Running CHSScraper...
+2025-08-05 19:10:44,549 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/
+2025-08-05 19:10:45,091 - CHSScraper - INFO - Found 18 new article links on CHS page 1
+2025-08-05 19:10:45,191 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/page/2/
+2025-08-05 19:10:45,522 - CHSScraper - INFO - Found 0 new article links on CHS page 2
+2025-08-05 19:10:45,522 - CHSScraper - INFO - No new links found, stopping CHS pagination.
+2025-08-05 19:10:45,523 - CHSScraper - INFO - Found 18 CHS article links
+2025-08-05 19:10:52,182 - __main__ - INFO - CHSScraper returned 18 articles
+2025-08-05 19:10:52,383 - __main__ - INFO - Running RSSFeedScraper...
+2025-08-05 19:10:52,710 - RSSFeedScraper - INFO - RSS KING 5: 40 entries
+2025-08-05 19:10:52,898 - RSSFeedScraper - INFO - RSS KOMO News: 41 entries
+2025-08-05 19:10:53,596 - RSSFeedScraper - INFO - RSS KIRO 7: 100 entries
+2025-08-05 19:10:53,826 - RSSFeedScraper - WARNING - RSS request for KUOW (News) failed with session (404 Client Error: Not Found for url: https://www.kuow.org/rss.xml). Falling back to feedparser direct.
+2025-08-05 19:10:54,458 - RSSFeedScraper - INFO - RSS KUOW (Morning Edition): 100 entries
+2025-08-05 19:10:54,772 - RSSFeedScraper - INFO - RSS KUOW (All Things Considered): 100 entries
+2025-08-05 19:10:54,987 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sat): 100 entries
+2025-08-05 19:10:55,209 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sun): 100 entries
+2025-08-05 19:10:55,519 - RSSFeedScraper - WARNING - RSS request for The Stranger failed with session (404 Client Error: Not Found for url: https://www.thestranger.com/rss.xml). Falling back to feedparser direct.
+2025-08-05 19:10:56,074 - RSSFeedScraper - INFO - RSS Capitol Hill Seattle: 5 entries
+2025-08-05 19:10:56,085 - __main__ - INFO - RSSFeedScraper returned 118 articles
+2025-08-05 19:10:56,286 - __main__ - INFO - Running WebScrapingScraper...
+2025-08-05 19:10:56,286 - WebScrapingScraper - INFO - Scraping KIRO 7...
+2025-08-05 19:10:56,700 - WebScrapingScraper - INFO - Found 97 potential article URLs for KIRO 7
+2025-08-05 19:11:45,805 - WebScrapingScraper - WARNING - No content extracted from https://membercenter.kiro7.com/newsletters/
+2025-08-05 19:12:05,631 - WebScrapingScraper - WARNING - Failed to extract from https://www.kiro7.com/weather/dopplerstream: 404 Client Error: Not Found for url: https://www.kiro7.com/weather/kiro-7-pinpoint-stormtracker-radar/63ab6056-a72f-4b51-ba3b-d464ca4679df/. Trying Wayback Machine...
+2025-08-05 19:12:08,041 - WebScrapingScraper - INFO - Successfully extracted from Wayback: http://web.archive.org/web/20210304084835/https://www.kiro7.com/weather/dopplerstream/
+2025-08-05 19:12:11,013 - WebScrapingScraper - WARNING - No content extracted from https://www.youtube.com/user/KIRO7Seattle
+2025-08-05 19:12:11,114 - WebScrapingScraper - INFO - Extracted 95 articles from KIRO 7
+2025-08-05 19:12:11,733 - WebScrapingScraper - INFO - Scraping KOMO News...
+2025-08-05 19:12:11,876 - WebScrapingScraper - INFO - Found 30 potential article URLs for KOMO News
+2025-08-05 19:12:18,340 - WebScrapingScraper - INFO - Extracted 30 articles from KOMO News
+2025-08-05 19:12:18,546 - WebScrapingScraper - INFO - Scraping KUOW...
+2025-08-05 19:12:18,546 - WebScrapingScraper - INFO - Using API for KUOW: https://www.kuow.org/api/v1/news?page=1
+2025-08-05 19:12:18,728 - WebScrapingScraper - ERROR - Error scraping KUOW: 404 Client Error: Not Found for url: https://www.kuow.org/api/v1/news?page=1
+2025-08-05 19:12:18,729 - WebScrapingScraper - INFO - Extracted 0 articles from KUOW
+2025-08-05 19:12:18,852 - __main__ - INFO - WebScrapingScraper returned 82 articles
+2025-08-05 19:12:19,053 - __main__ - INFO - Running SimpleSeattleTimesScraper...
+2025-08-05 19:12:19,207 - SimpleSeattleTimesScraper - INFO - Trying Wayback Machine for more Seattle Times articles...
+2025-08-05 19:12:56,972 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241001174142/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-05 19:13:01,082 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241001174142/https://www.seattletimes.com/
+2025-08-05 19:13:01,320 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241001174142/https://www.seattletimes.com/
+2025-08-05 19:17:42,368 - __main__ - INFO - SimpleSeattleTimesScraper returned 80 articles
+2025-08-05 19:17:42,573 - __main__ - INFO - Removed 59 duplicates
+2025-08-05 19:17:42,624 - __main__ - INFO - Saved 306 articles to seattle_news_20250805_191742.csv
+2025-08-07 18:56:36,581 - __main__ - INFO - Running StrangerScraper...
+2025-08-07 18:56:37,976 - StrangerScraper - INFO - Found 49 Stranger article links from https://www.thestranger.com/news/
+2025-08-07 18:56:42,549 - StrangerScraper - INFO - Found 17 Stranger article links from https://www.thestranger.com/stranger-election-control-board/
+2025-08-07 18:59:26,875 - __main__ - INFO - StrangerScraper returned 62 articles
+2025-08-07 18:59:27,076 - __main__ - INFO - Running CHSScraper...
+2025-08-07 18:59:27,076 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/
+2025-08-07 18:59:28,422 - CHSScraper - INFO - Found 18 new article links on CHS page 1
+2025-08-07 18:59:28,522 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/page/2/
+2025-08-07 18:59:28,946 - CHSScraper - INFO - Found 0 new article links on CHS page 2
+2025-08-07 18:59:28,946 - CHSScraper - INFO - No new links found, stopping CHS pagination.
+2025-08-07 18:59:28,947 - CHSScraper - INFO - Found 18 CHS article links
+2025-08-07 18:59:38,031 - __main__ - INFO - CHSScraper returned 18 articles
+2025-08-07 18:59:38,233 - __main__ - INFO - Running RSSFeedScraper...
+2025-08-07 18:59:38,484 - RSSFeedScraper - INFO - RSS KING 5: 40 entries
+2025-08-07 18:59:38,631 - RSSFeedScraper - INFO - RSS KOMO News: 41 entries
+2025-08-07 18:59:41,172 - RSSFeedScraper - INFO - RSS KIRO 7: 100 entries
+2025-08-07 18:59:41,421 - RSSFeedScraper - WARNING - RSS request for KUOW (News) failed with session (404 Client Error: Not Found for url: https://www.kuow.org/rss.xml). Falling back to feedparser direct.
+2025-08-07 18:59:41,855 - RSSFeedScraper - INFO - RSS KUOW (Morning Edition): 100 entries
+2025-08-07 18:59:42,132 - RSSFeedScraper - INFO - RSS KUOW (All Things Considered): 100 entries
+2025-08-07 18:59:42,361 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sat): 100 entries
+2025-08-07 18:59:42,561 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sun): 100 entries
+2025-08-07 18:59:42,924 - RSSFeedScraper - WARNING - RSS request for The Stranger failed with session (404 Client Error: Not Found for url: https://www.thestranger.com/rss.xml). Falling back to feedparser direct.
+2025-08-07 18:59:43,503 - RSSFeedScraper - INFO - RSS Capitol Hill Seattle: 5 entries
+2025-08-07 18:59:43,512 - __main__ - INFO - RSSFeedScraper returned 109 articles
+2025-08-07 18:59:43,714 - __main__ - INFO - Running WebScrapingScraper...
+2025-08-07 18:59:43,714 - WebScrapingScraper - INFO - Scraping KIRO 7...
+2025-08-07 18:59:44,253 - WebScrapingScraper - INFO - Found 99 potential article URLs for KIRO 7
+2025-08-07 18:59:52,962 - WebScrapingScraper - WARNING - No content extracted from https://membercenter.kiro7.com/newsletters/
+2025-08-07 19:00:19,764 - WebScrapingScraper - WARNING - No content extracted from https://www.youtube.com/user/KIRO7Seattle
+2025-08-07 19:00:26,710 - WebScrapingScraper - WARNING - Failed to extract from https://www.kiro7.com/weather/dopplerstream: 404 Client Error: Not Found for url: https://www.kiro7.com/weather/kiro-7-pinpoint-stormtracker-radar/63ab6056-a72f-4b51-ba3b-d464ca4679df/. Trying Wayback Machine...
+2025-08-07 19:01:10,118 - WebScrapingScraper - INFO - Extracted 96 articles from KIRO 7
+2025-08-07 19:01:10,751 - WebScrapingScraper - INFO - Scraping KOMO News...
+2025-08-07 19:01:10,940 - WebScrapingScraper - INFO - Found 28 potential article URLs for KOMO News
+2025-08-07 19:01:15,982 - WebScrapingScraper - INFO - Extracted 28 articles from KOMO News
+2025-08-07 19:01:16,183 - WebScrapingScraper - INFO - Scraping KUOW...
+2025-08-07 19:01:16,183 - WebScrapingScraper - INFO - Using API for KUOW: https://www.kuow.org/api/v1/news?page=1
+2025-08-07 19:01:16,310 - WebScrapingScraper - ERROR - Error scraping KUOW: 404 Client Error: Not Found for url: https://www.kuow.org/api/v1/news?page=1
+2025-08-07 19:01:16,311 - WebScrapingScraper - INFO - Extracted 0 articles from KUOW
+2025-08-07 19:01:16,437 - __main__ - INFO - WebScrapingScraper returned 103 articles
+2025-08-07 19:01:16,638 - __main__ - INFO - Running SimpleSeattleTimesScraper...
+2025-08-07 19:01:16,810 - SimpleSeattleTimesScraper - INFO - Trying Wayback Machine for more Seattle Times articles...
+2025-08-07 19:01:56,477 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-07 19:07:55,187 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-07 19:08:00,610 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-07 19:08:04,690 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-07 19:08:13,576 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-07 19:08:16,339 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-07 19:08:24,713 - __main__ - INFO - SimpleSeattleTimesScraper returned 87 articles
+2025-08-07 19:08:24,939 - __main__ - INFO - Removed 79 duplicates
+2025-08-07 19:08:24,999 - __main__ - INFO - Saved 300 articles to seattle_news_20250807_190824.csv

@@ -99,9 +99,11 @@ RELEVANCE_KEYWORDS = {
         "seattle politics", "election", "candidate", "municipal", "governance",
 
         # 2025 Seattle mayoral candidates
-        "harrell", "bruce harrell", "wilson", "katie wilson", "armstrong", "ry armstrong",
-        "bliss", "clinton bliss", "mallahan", "joe mallahan", "molloy", "joe molloy",
-        "whelan", "thaddeus whelan", "willoughby", "isaiah willoughby", "savage", "rachel savage",
+        "harrell", "bruce harrell", "wilson", "katie wilson", "k wilson", "k. wilson", 
+        "community organizer wilson", "democratic wilson", "organizer katie wilson",
+        "armstrong", "ry armstrong", "bliss", "clinton bliss", "mallahan", "joe mallahan", 
+        "molloy", "joe molloy", "whelan", "thaddeus whelan", "willoughby", "isaiah willoughby", 
+        "savage", "rachel savage",
         
         # Other Seattle officials/candidates
         "davison", "ann davison", "juarez", "debora juarez", "lewis", "andrew lewis",
@@ -112,7 +114,8 @@ RELEVANCE_KEYWORDS = {
     ],
     "medium": [
         "budget", "housing", "homeless", "homelessness", "transportation", "zoning", 
-        "public safety", "police", "SPD", "infrastructure", "taxes"
+        "public safety", "police", "SPD", "infrastructure", "taxes", "labor", "union", 
+        "workers", "organizing", "community organizing", "activism"
     ],
     "low": [
         "policy", "development", "parks", "fire department", "referendum",
