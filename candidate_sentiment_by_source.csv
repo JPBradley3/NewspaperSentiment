@@ -1,15 +1,16 @@
 "source","candidate","articles","avg_sentiment"
 "KING 5","Harrell",1,1
-"KIRO 7","Bliss",4,-0.27046332046332
-"KIRO 7","Gonzalez",4,-0.75
+"KIRO 7","Bliss",9,-0.276927237796803
+"KIRO 7","Gonzalez",9,-0.779569892473118
 "KIRO 7","Harrell",1,0.8
-"KIRO 7","Wilson",4,1.28032036613272
+"KIRO 7","Wilson",9,1.33502839223663
 "KOMO News","Armstrong",8,-0.560827117928511
 "KOMO News","Davison",1,-0.425
+"KOMO News","Nelson",1,-0.142857142857143
 "KUOW (Weekend Edition Sat)","Wilson",1,1.66666666666667
 "Seattle Times (Simple)","Davison",1,0.488054607508532
 "Seattle Times (Simple)","Harrell",1,-0.705882352941177
-"Seattle Times (Simple)","Nelson",2,-1.25
+"Seattle Times (Simple)","Nelson",3,-0.954545454545455
 "Seattle Times (Simple)","Whelan",1,0
 "Seattle Times (Simple)","Wilson",4,0.195959595959596
 "The Stranger (Web)","Davison",2,-1.21689002759164
