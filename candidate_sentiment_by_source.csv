@@ -6,6 +6,7 @@
 "KIRO 7","Wilson",9,1.33502839223663
 "KOMO News","Armstrong",8,-0.560827117928511
 "KOMO News","Davison",1,-0.425
+"KOMO News","Harrell",1,2
 "KOMO News","Nelson",1,-0.142857142857143
 "KUOW (Weekend Edition Sat)","Wilson",1,1.66666666666667
 "Seattle Times (Simple)","Davison",1,0.488054607508532
@@ -15,7 +16,7 @@
 "Seattle Times (Simple)","Wilson",4,0.195959595959596
 "The Stranger (Web)","Davison",2,-1.21689002759164
 "The Stranger (Web)","Gonzalez",1,-0.6
-"The Stranger (Web)","Harrell",27,-0.166362037139434
+"The Stranger (Web)","Harrell",28,-0.175726658262005
 "The Stranger (Web)","Nelson",5,-0.24862012987013
 "The Stranger (Web)","Savage",1,0.25
 "The Stranger (Web)","Wilson",2,0.592420212765957
