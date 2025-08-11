@@ -1,10 +1,10 @@
 "source","candidate","articles","avg_sentiment"
 "KING 5","Harrell",1,1
-"KIRO 7","Bliss",9,-0.276927237796803
-"KIRO 7","Gonzalez",9,-0.779569892473118
+"KIRO 7","Bliss",1,-0.257142857142857
+"KIRO 7","Gonzalez",1,-0.75
 "KIRO 7","Harrell",1,0.8
-"KIRO 7","Wilson",9,1.33502839223663
-"KOMO News","Armstrong",8,-0.560827117928511
+"KIRO 7","Wilson",2,1.07017543859649
+"KOMO News","Armstrong",19,-0.719684095363874
 "KOMO News","Davison",1,-0.425
 "KOMO News","Harrell",1,2
 "KOMO News","Nelson",1,-0.142857142857143

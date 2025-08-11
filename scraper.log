@@ -1608,3 +1608,63 @@
 2025-08-10 19:50:41,581 - __main__ - INFO - SimpleSeattleTimesScraper returned 200 articles
 2025-08-10 19:50:41,819 - __main__ - INFO - Removed 167 duplicates
 2025-08-10 19:50:41,908 - __main__ - INFO - Saved 302 articles to seattle_news_20250810_195041.csv
+2025-08-11 16:01:53,456 - __main__ - INFO - Running StrangerScraper...
+2025-08-11 16:01:54,305 - StrangerScraper - INFO - Found 50 Stranger article links from https://www.thestranger.com/news/
+2025-08-11 16:01:55,461 - StrangerScraper - INFO - Found 18 Stranger article links from https://www.thestranger.com/stranger-election-control-board/
+2025-08-11 16:04:23,661 - __main__ - INFO - StrangerScraper returned 63 articles
+2025-08-11 16:04:23,862 - __main__ - INFO - Running CHSScraper...
+2025-08-11 16:04:23,863 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/
+2025-08-11 16:04:25,425 - CHSScraper - INFO - Found 18 new article links on CHS page 1
+2025-08-11 16:04:25,526 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/page/2/
+2025-08-11 16:04:26,010 - CHSScraper - INFO - Found 0 new article links on CHS page 2
+2025-08-11 16:04:26,010 - CHSScraper - INFO - No new links found, stopping CHS pagination.
+2025-08-11 16:04:26,011 - CHSScraper - INFO - Found 18 CHS article links
+2025-08-11 16:04:36,284 - __main__ - INFO - CHSScraper returned 18 articles
+2025-08-11 16:04:36,486 - __main__ - INFO - Running RSSFeedScraper...
+2025-08-11 16:04:37,032 - RSSFeedScraper - INFO - RSS KING 5: 40 entries
+2025-08-11 16:04:37,213 - RSSFeedScraper - INFO - RSS KOMO News: 41 entries
+2025-08-11 16:04:37,942 - RSSFeedScraper - INFO - RSS KIRO 7: 100 entries
+2025-08-11 16:04:38,218 - RSSFeedScraper - WARNING - RSS request for KUOW (News) failed with session (404 Client Error: Not Found for url: https://www.kuow.org/rss.xml). Falling back to feedparser direct.
+2025-08-11 16:04:38,815 - RSSFeedScraper - INFO - RSS KUOW (Morning Edition): 100 entries
+2025-08-11 16:04:39,120 - RSSFeedScraper - INFO - RSS KUOW (All Things Considered): 100 entries
+2025-08-11 16:04:39,408 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sat): 100 entries
+2025-08-11 16:04:39,654 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sun): 100 entries
+2025-08-11 16:04:40,134 - RSSFeedScraper - WARNING - RSS request for The Stranger failed with session (404 Client Error: Not Found for url: https://www.thestranger.com/rss.xml). Falling back to feedparser direct.
+2025-08-11 16:04:40,776 - RSSFeedScraper - INFO - RSS Capitol Hill Seattle: 5 entries
+2025-08-11 16:04:40,787 - __main__ - INFO - RSSFeedScraper returned 114 articles
+2025-08-11 16:04:40,989 - __main__ - INFO - Running WebScrapingScraper...
+2025-08-11 16:04:40,989 - WebScrapingScraper - INFO - Scraping KIRO 7...
+2025-08-11 16:04:41,132 - WebScrapingScraper - INFO - Found 96 potential article URLs for KIRO 7
+2025-08-11 16:05:08,391 - WebScrapingScraper - WARNING - No content extracted from https://membercenter.kiro7.com/newsletters/
+2025-08-11 16:05:25,725 - WebScrapingScraper - WARNING - Failed to extract from https://www.kiro7.com/weather/dopplerstream: 404 Client Error: Not Found for url: https://www.kiro7.com/weather/kiro-7-pinpoint-stormtracker-radar/63ab6056-a72f-4b51-ba3b-d464ca4679df/. Trying Wayback Machine...
+2025-08-11 16:05:36,787 - WebScrapingScraper - WARNING - No content extracted from https://www.youtube.com/user/KIRO7Seattle
+2025-08-11 16:06:26,628 - WebScrapingScraper - INFO - Extracted 93 articles from KIRO 7
+2025-08-11 16:06:27,260 - WebScrapingScraper - INFO - Scraping KOMO News...
+2025-08-11 16:06:27,492 - WebScrapingScraper - INFO - Found 33 potential article URLs for KOMO News
+2025-08-11 16:06:34,772 - WebScrapingScraper - INFO - Extracted 33 articles from KOMO News
+2025-08-11 16:06:35,005 - WebScrapingScraper - INFO - Scraping KUOW...
+2025-08-11 16:06:35,006 - WebScrapingScraper - INFO - Using API for KUOW: https://www.kuow.org/api/v1/news?page=1
+2025-08-11 16:06:35,194 - WebScrapingScraper - ERROR - Error scraping KUOW: 404 Client Error: Not Found for url: https://www.kuow.org/api/v1/news?page=1
+2025-08-11 16:06:35,194 - WebScrapingScraper - INFO - Extracted 0 articles from KUOW
+2025-08-11 16:06:35,357 - __main__ - INFO - WebScrapingScraper returned 106 articles
+2025-08-11 16:06:35,558 - __main__ - INFO - Running SimpleSeattleTimesScraper...
+2025-08-11 16:06:35,792 - SimpleSeattleTimesScraper - INFO - Trying Wayback Machine for more Seattle Times articles...
+2025-08-11 16:07:15,193 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-11 16:10:05,207 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030154/https://www.seattletimes.com/sports/uw-huskies/
+2025-08-11 16:11:19,032 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030300/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 16:11:38,129 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030300/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 16:12:02,677 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241203234600/https://www.seattletimes.com/entertainment/comics/
+2025-08-11 16:12:21,790 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241203234600/https://www.seattletimes.com/entertainment/comics/
+2025-08-11 16:14:17,893 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030117/https://www.seattletimes.com/video/
+2025-08-11 16:23:11,185 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241204121721/https://secure.seattletimes.com/accountcenter/managesubscriptions
+2025-08-11 16:24:42,051 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 16:24:48,533 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 16:24:59,957 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 16:25:12,551 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 16:25:21,674 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 16:25:35,971 - __main__ - INFO - SimpleSeattleTimesScraper returned 87 articles
+2025-08-11 16:25:36,184 - __main__ - INFO - Removed 75 duplicates
+2025-08-11 16:25:36,310 - __main__ - INFO - Saved 313 articles to seattle_news_20250811_162536.csv
+2025-08-11 16:25:36,314 - __main__ - INFO - Creating master database from 6 CSV files
+2025-08-11 16:25:36,589 - __main__ - INFO - Master database: 616 unique articles (1198 duplicates removed)
+2025-08-11 16:25:36,589 - __main__ - INFO - Saved to seattle_news_master_20250811_162536.csv

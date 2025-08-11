@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import feedparser
 import pandas as pd
 import time
+import glob
 from urllib.parse import urljoin, urlparse
 from dataclasses import dataclass
 from typing import List, Dict, Optional
@@ -963,9 +964,42 @@ def main():
     else:
         logger.warning("No articles found")
 
+def create_master_database():
+    """Merge all seattle_news_*.csv files into a master database"""
+    import glob
+    
+    csv_files = glob.glob("seattle_news_*.csv")
+    if not csv_files:
+        logger.info("No previous CSV files found for master database")
+        return
+    
+    logger.info(f"Creating master database from {len(csv_files)} CSV files")
+    
+    all_data = []
+    for file in csv_files:
+        try:
+            df = pd.read_csv(file)
+            df['source_file'] = file
+            all_data.append(df)
+        except Exception as e:
+            logger.warning(f"Error loading {file}: {e}")
+    
+    if all_data:
+        master_df = pd.concat(all_data, ignore_index=True)
+        initial_count = len(master_df)
+        master_df = master_df.drop_duplicates(subset=['url'], keep='first')
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_file = f"seattle_news_master_{timestamp}.csv"
+        master_df.to_csv(output_file, index=False)
+        
+        logger.info(f"Master database: {len(master_df)} unique articles ({initial_count - len(master_df)} duplicates removed)")
+        logger.info(f"Saved to {output_file}")
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "--debug":
         test_scraper_debug()
     else:
         main()
+        create_master_database()

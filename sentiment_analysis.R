@@ -5,9 +5,22 @@ library(textdata)
 library(ggplot2)
 library(scales)
 
-# Read all CSV files and combine them
-csv_files <- list.files(pattern = "seattle_news_.*\\.csv", full.names = TRUE)
-if (length(csv_files) == 0) stop("No CSV files found")
+# Read all CSV files and combine them (prioritize master database)
+master_files <- list.files(pattern = "seattle_news_master_.*\\.csv", full.names = TRUE)
+regular_files <- list.files(pattern = "seattle_news_.*\\.csv", full.names = TRUE)
+regular_files <- regular_files[!grepl("master", regular_files)]  # Exclude master files
+
+if (length(master_files) > 0) {
+  # Use most recent master database
+  csv_files <- master_files[length(master_files)]
+  cat("Using master database:", csv_files, "\n")
+} else if (length(regular_files) > 0) {
+  # Fall back to regular files
+  csv_files <- regular_files
+  cat("Using", length(csv_files), "regular CSV files\n")
+} else {
+  stop("No CSV files found")
+}
 
 news_data <- map_dfr(csv_files, ~ read.csv(.x, stringsAsFactors = FALSE)) %>%
   mutate(
@@ -197,6 +210,29 @@ if (exists("candidate_sentiment")) {
 }
 if (exists("thematic_sentiment")) {
   write.csv(thematic_sentiment, "sentiment_by_theme_and_source.csv", row.names = FALSE)
+}
+
+# Create master database from all CSV files if not using one already
+if (length(master_files) == 0 && length(regular_files) > 1) {
+  cat("Creating master database from", length(regular_files), "files...\n")
+  
+  all_files_data <- map_dfr(regular_files, ~ {
+    df <- read.csv(.x, stringsAsFactors = FALSE)
+    df$source_file <- .x
+    df
+  })
+  
+  # Remove duplicates
+  initial_count <- nrow(all_files_data)
+  all_files_data <- all_files_data %>% distinct(url, .keep_all = TRUE)
+  
+  # Save master database
+  timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+  master_filename <- paste0("seattle_news_master_", timestamp, ".csv")
+  write.csv(all_files_data, master_filename, row.names = FALSE)
+  
+  cat("Master database saved:", master_filename, "\n")
+  cat("Total articles:", nrow(all_files_data), "(removed", initial_count - nrow(all_files_data), "duplicates)\n")
 }
 
 cat("Analysis complete - all files saved\n")
