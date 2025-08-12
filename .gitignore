@@ -1,1 +1,4 @@
 sentiment_analysis_clean.R
+run_analysis.r
+auto_nrc.r
+sentiment_analysis_simple.r

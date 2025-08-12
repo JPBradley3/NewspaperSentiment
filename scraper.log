@@ -1668,3 +1668,183 @@
 2025-08-11 16:25:36,314 - __main__ - INFO - Creating master database from 6 CSV files
 2025-08-11 16:25:36,589 - __main__ - INFO - Master database: 616 unique articles (1198 duplicates removed)
 2025-08-11 16:25:36,589 - __main__ - INFO - Saved to seattle_news_master_20250811_162536.csv
+2025-08-11 18:24:12,442 - __main__ - INFO - Running StrangerScraper...
+2025-08-11 18:24:13,265 - StrangerScraper - INFO - Found 50 Stranger article links from https://www.thestranger.com/news/
+2025-08-11 18:24:13,697 - StrangerScraper - INFO - Found 18 Stranger article links from https://www.thestranger.com/stranger-election-control-board/
+2025-08-11 18:24:34,129 - __main__ - INFO - StrangerScraper returned 63 articles
+2025-08-11 18:24:34,330 - __main__ - INFO - Running CHSScraper...
+2025-08-11 18:24:34,331 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/
+2025-08-11 18:24:35,719 - CHSScraper - INFO - Found 18 new article links on CHS page 1
+2025-08-11 18:24:35,825 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/page/2/
+2025-08-11 18:24:36,281 - CHSScraper - INFO - Found 0 new article links on CHS page 2
+2025-08-11 18:24:36,281 - CHSScraper - INFO - No new links found, stopping CHS pagination.
+2025-08-11 18:24:36,281 - CHSScraper - INFO - Found 18 CHS article links
+2025-08-11 18:24:48,730 - __main__ - INFO - CHSScraper returned 18 articles
+2025-08-11 18:24:48,933 - __main__ - INFO - Running RSSFeedScraper...
+2025-08-11 18:24:49,080 - RSSFeedScraper - INFO - No entries in Seattle Times RSS, trying Wayback Machine...
+2025-08-11 18:24:55,522 - RSSFeedScraper - INFO - RSS KING 5: 40 entries
+2025-08-11 18:24:55,709 - RSSFeedScraper - INFO - RSS KOMO News: 41 entries
+2025-08-11 18:24:56,502 - RSSFeedScraper - INFO - RSS KIRO 7: 100 entries
+2025-08-11 18:24:56,858 - RSSFeedScraper - WARNING - RSS request for KUOW (News) failed with session (404 Client Error: Not Found for url: https://www.kuow.org/rss.xml). Falling back to feedparser direct.
+2025-08-11 18:24:57,043 - RSSFeedScraper - INFO - No entries in KUOW (News) RSS, trying Wayback Machine...
+2025-08-11 18:25:02,521 - RSSFeedScraper - INFO - RSS KUOW (Morning Edition): 100 entries
+2025-08-11 18:25:03,068 - RSSFeedScraper - INFO - RSS KUOW (All Things Considered): 100 entries
+2025-08-11 18:25:03,363 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sat): 100 entries
+2025-08-11 18:25:03,619 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sun): 100 entries
+2025-08-11 18:25:03,993 - RSSFeedScraper - WARNING - RSS request for The Stranger failed with session (404 Client Error: Not Found for url: https://www.thestranger.com/rss.xml). Falling back to feedparser direct.
+2025-08-11 18:25:04,308 - RSSFeedScraper - INFO - No entries in The Stranger RSS, trying Wayback Machine...
+2025-08-11 18:25:09,815 - RSSFeedScraper - INFO - RSS Capitol Hill Seattle: 5 entries
+2025-08-11 18:25:09,829 - __main__ - INFO - RSSFeedScraper returned 112 articles
+2025-08-11 18:25:10,030 - __main__ - INFO - Running WebScrapingScraper...
+2025-08-11 18:25:10,030 - WebScrapingScraper - INFO - Scraping KIRO 7...
+2025-08-11 18:25:10,203 - WebScrapingScraper - INFO - Found 92 potential article URLs for KIRO 7
+2025-08-11 18:25:16,522 - WebScrapingScraper - WARNING - No content extracted from https://membercenter.kiro7.com/newsletters/
+2025-08-11 18:25:38,154 - WebScrapingScraper - WARNING - No content extracted from https://www.youtube.com/user/KIRO7Seattle
+2025-08-11 18:25:52,605 - WebScrapingScraper - WARNING - Failed to extract from https://www.kiro7.com/weather/dopplerstream: 404 Client Error: Not Found for url: https://www.kiro7.com/weather/kiro-7-pinpoint-stormtracker-radar/63ab6056-a72f-4b51-ba3b-d464ca4679df/. Trying Wayback Machine...
+2025-08-11 18:25:57,776 - WebScrapingScraper - INFO - Successfully extracted from Wayback: http://web.archive.org/web/20210304084835/https://www.kiro7.com/weather/dopplerstream/
+2025-08-11 18:26:44,650 - WebScrapingScraper - INFO - Extracted 90 articles from KIRO 7
+2025-08-11 18:26:45,370 - WebScrapingScraper - INFO - Scraping KOMO News...
+2025-08-11 18:26:45,560 - WebScrapingScraper - INFO - Found 32 potential article URLs for KOMO News
+2025-08-11 18:26:54,128 - WebScrapingScraper - INFO - Extracted 32 articles from KOMO News
+2025-08-11 18:26:54,395 - WebScrapingScraper - INFO - Scraping KUOW...
+2025-08-11 18:26:54,396 - WebScrapingScraper - INFO - Using API for KUOW: https://www.kuow.org/api/v1/news?page=1
+2025-08-11 18:26:54,569 - WebScrapingScraper - ERROR - Error scraping KUOW: 404 Client Error: Not Found for url: https://www.kuow.org/api/v1/news?page=1
+2025-08-11 18:26:54,571 - WebScrapingScraper - INFO - Extracted 0 articles from KUOW
+2025-08-11 18:26:54,813 - __main__ - INFO - WebScrapingScraper returned 84 articles
+2025-08-11 18:26:55,015 - __main__ - INFO - Running SimpleSeattleTimesScraper...
+2025-08-11 18:26:55,238 - SimpleSeattleTimesScraper - INFO - Trying Wayback Machine for more Seattle Times articles...
+2025-08-11 18:27:29,215 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20250130031143/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-11 18:28:14,330 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250127185110/https://www.seattletimes.com/seattle-news/eastside/
+2025-08-11 18:30:51,049 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250202014934/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 18:36:01,268 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250202014954/https://www.seattletimes.com/sports/storm/
+2025-08-11 18:38:51,842 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250202011414/https://www.seattletimes.com/author/alex-fryer/
+2025-08-11 18:40:39,381 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250130040501/https://secure.seattletimes.com/accountcenter/managesubscriptions
+2025-08-11 18:43:06,902 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-11 18:47:50,905 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030158/https://www.seattletimes.com/homes-real-estate/
+2025-08-11 18:54:00,720 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241203070734/https://www.seattletimes.com/category/northwest-hikes/
+2025-08-11 18:57:19,842 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030058/https://www.seattletimes.com/seattle-news/mental-health/
+2025-08-11 18:58:16,999 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 18:58:20,618 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 18:58:27,554 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 18:58:38,995 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 18:58:43,387 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 18:59:09,851 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241102080816/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-11 19:02:07,688 - __main__ - INFO - SimpleSeattleTimesScraper returned 200 articles
+2025-08-11 19:02:07,909 - __main__ - INFO - Removed 165 duplicates
+2025-08-11 19:02:08,147 - __main__ - INFO - Saved 312 articles to seattle_news_20250811_190207.csv
+2025-08-11 19:02:08,152 - __main__ - INFO - Creating master database from 8 CSV files
+2025-08-11 19:02:08,590 - __main__ - INFO - Master database: 620 unique articles (2122 duplicates removed)
+2025-08-11 19:02:08,591 - __main__ - INFO - Saved to seattle_news_master_20250811_190208.csv
+2025-08-11 22:08:16,043 - __main__ - INFO - Running StrangerScraper...
+2025-08-11 22:08:16,751 - StrangerScraper - INFO - Found 50 Stranger article links from https://www.thestranger.com/news/
+2025-08-11 22:08:20,598 - StrangerScraper - INFO - Found 18 Stranger article links from https://www.thestranger.com/stranger-election-control-board/
+2025-08-11 22:09:18,857 - __main__ - INFO - StrangerScraper returned 63 articles
+2025-08-11 22:09:19,059 - __main__ - INFO - Running CHSScraper...
+2025-08-11 22:09:19,060 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/
+2025-08-11 22:09:20,799 - CHSScraper - INFO - Found 18 new article links on CHS page 1
+2025-08-11 22:09:20,900 - CHSScraper - INFO - Scraping CHS page: https://www.capitolhillseattle.com/category/news/page/2/
+2025-08-11 22:09:21,357 - CHSScraper - INFO - Found 0 new article links on CHS page 2
+2025-08-11 22:09:21,358 - CHSScraper - INFO - No new links found, stopping CHS pagination.
+2025-08-11 22:09:21,358 - CHSScraper - INFO - Found 18 CHS article links
+2025-08-11 22:09:36,058 - __main__ - INFO - CHSScraper returned 18 articles
+2025-08-11 22:09:36,260 - __main__ - INFO - Running RSSFeedScraper...
+2025-08-11 22:09:36,375 - RSSFeedScraper - INFO - No entries in Seattle Times RSS, trying Wayback Machine...
+2025-08-11 22:09:45,116 - RSSFeedScraper - INFO - RSS KING 5: 40 entries
+2025-08-11 22:09:45,330 - RSSFeedScraper - INFO - RSS KOMO News: 41 entries
+2025-08-11 22:09:46,142 - RSSFeedScraper - INFO - RSS KIRO 7: 100 entries
+2025-08-11 22:09:46,434 - RSSFeedScraper - WARNING - RSS request for KUOW (News) failed with session (404 Client Error: Not Found for url: https://www.kuow.org/rss.xml). Falling back to feedparser direct.
+2025-08-11 22:09:46,650 - RSSFeedScraper - INFO - No entries in KUOW (News) RSS, trying Wayback Machine...
+2025-08-11 22:09:52,194 - RSSFeedScraper - INFO - RSS KUOW (Morning Edition): 100 entries
+2025-08-11 22:09:52,503 - RSSFeedScraper - INFO - RSS KUOW (All Things Considered): 100 entries
+2025-08-11 22:09:58,301 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sat): 100 entries
+2025-08-11 22:09:58,571 - RSSFeedScraper - INFO - RSS KUOW (Weekend Edition Sun): 100 entries
+2025-08-11 22:09:58,914 - RSSFeedScraper - WARNING - RSS request for The Stranger failed with session (404 Client Error: Not Found for url: https://www.thestranger.com/rss.xml). Falling back to feedparser direct.
+2025-08-11 22:09:59,241 - RSSFeedScraper - INFO - No entries in The Stranger RSS, trying Wayback Machine...
+2025-08-11 22:10:04,686 - RSSFeedScraper - INFO - RSS Capitol Hill Seattle: 5 entries
+2025-08-11 22:10:04,696 - __main__ - INFO - RSSFeedScraper returned 112 articles
+2025-08-11 22:10:04,898 - __main__ - INFO - Running WebScrapingScraper...
+2025-08-11 22:10:04,898 - WebScrapingScraper - INFO - Scraping KIRO 7...
+2025-08-11 22:10:06,118 - WebScrapingScraper - INFO - Found 90 potential article URLs for KIRO 7
+2025-08-11 22:10:49,721 - WebScrapingScraper - WARNING - No content extracted from https://www.youtube.com/user/KIRO7Seattle
+2025-08-11 22:10:59,252 - WebScrapingScraper - WARNING - No content extracted from https://membercenter.kiro7.com/newsletters/
+2025-08-11 22:11:33,246 - WebScrapingScraper - WARNING - Failed to extract from https://www.kiro7.com/weather/dopplerstream: 404 Client Error: Not Found for url: https://www.kiro7.com/weather/kiro-7-pinpoint-stormtracker-radar/63ab6056-a72f-4b51-ba3b-d464ca4679df/. Trying Wayback Machine...
+2025-08-11 22:11:39,085 - WebScrapingScraper - INFO - Extracted 87 articles from KIRO 7
+2025-08-11 22:11:39,731 - WebScrapingScraper - INFO - Scraping KOMO News...
+2025-08-11 22:11:39,959 - WebScrapingScraper - INFO - Found 32 potential article URLs for KOMO News
+2025-08-11 22:11:47,376 - WebScrapingScraper - INFO - Extracted 32 articles from KOMO News
+2025-08-11 22:11:47,621 - WebScrapingScraper - INFO - Scraping KUOW...
+2025-08-11 22:11:47,940 - WebScrapingScraper - WARNING - KUOW API page 1 failed: 404 Client Error: Not Found for url: https://www.kuow.org/api/v1/news?page=1
+2025-08-11 22:11:47,941 - WebScrapingScraper - INFO - Found 0 potential article URLs for KUOW
+2025-08-11 22:11:47,942 - WebScrapingScraper - INFO - Extracted 0 articles from KUOW
+2025-08-11 22:11:48,082 - __main__ - INFO - WebScrapingScraper returned 84 articles
+2025-08-11 22:11:48,283 - __main__ - INFO - Running SimpleSeattleTimesScraper...
+2025-08-11 22:11:48,661 - SimpleSeattleTimesScraper - INFO - Trying Wayback Machine for more Seattle Times articles...
+2025-08-11 22:12:22,799 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20250101234156/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-11 22:13:11,517 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101235354/https://www.seattletimes.com/seattle-news/eastside/
+2025-08-11 22:14:13,590 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101234138/https://www.seattletimes.com/business/
+2025-08-11 22:14:32,713 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101234138/https://www.seattletimes.com/business/
+2025-08-11 22:15:23,177 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000508/https://www.seattletimes.com/sports/uw-huskies/
+2025-08-11 22:15:42,242 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000508/https://www.seattletimes.com/sports/uw-huskies/
+2025-08-11 22:16:53,838 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101232951/https://www.seattletimes.com/entertainment/comics/
+2025-08-11 22:18:05,922 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000508/https://www.seattletimes.com/homes-real-estate/
+2025-08-11 22:18:43,593 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000459/https://www.seattletimes.com/author/david-horsey/
+2025-08-11 22:19:20,305 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000521/https://www.seattletimes.com/video/
+2025-08-11 22:19:39,434 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000521/https://www.seattletimes.com/video/
+2025-08-11 22:21:14,645 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101234138/https://www.seattletimes.com/business/
+2025-08-11 22:23:45,552 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000508/https://www.seattletimes.com/sports/uw-huskies/
+2025-08-11 22:24:04,638 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000508/https://www.seattletimes.com/sports/uw-huskies/
+2025-08-11 22:25:10,628 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101235318/https://www.seattletimes.com/entertainment/movies/
+2025-08-11 22:25:32,657 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101234156/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 22:25:48,379 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101235320/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 22:26:26,052 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101232951/https://www.seattletimes.com/entertainment/comics/
+2025-08-11 22:26:45,162 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101232951/https://www.seattletimes.com/entertainment/comics/
+2025-08-11 22:27:01,815 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101235347/https://www.seattletimes.com/entertainment/games/
+2025-08-11 22:27:20,915 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101235347/https://www.seattletimes.com/entertainment/games/
+2025-08-11 22:29:07,920 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250102000459/https://www.seattletimes.com/author/david-horsey/
+2025-08-11 22:29:43,235 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101234145/https://www.seattletimes.com/author/alex-fryer/
+2025-08-11 22:30:02,332 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20250101234145/https://www.seattletimes.com/author/alex-fryer/
+2025-08-11 22:30:44,470 - SimpleSeattleTimesScraper - WARNING - Failed to extract from http://web.archive.org/web/20250101234156/http://autos.seattletimes.com/: 403 Client Error: Forbidden for url: http://web.archive.org/web/20250101234140/http://autos.seattletimes.com/. Trying Wayback Machine...
+2025-08-11 22:33:36,917 - SimpleSeattleTimesScraper - WARNING - Failed to extract from http://web.archive.org/web/20250101234156/https://autos.seattletimes.com/: 403 Client Error: Forbidden for url: http://web.archive.org/web/20250101234140/http://autos.seattletimes.com/. Trying Wayback Machine...
+2025-08-11 22:34:31,070 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-11 22:37:44,549 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241203023156/https://www.seattletimes.com/sports/reign/
+2025-08-11 22:38:33,747 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030300/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 22:38:52,817 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030300/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 22:39:08,849 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241202124519/https://www.seattletimes.com/entertainment/classical-music/
+2025-08-11 22:39:48,467 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241128191649/https://www.seattletimes.com/entertainment/games/
+2025-08-11 22:41:48,303 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030148/https://www.seattletimes.com/obituaries/
+2025-08-11 22:42:19,653 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241128191633/https://www.seattletimes.com/newsletters/
+2025-08-11 22:42:49,606 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241202062812/https://www.seattletimes.com/tag/inside-the-times/
+2025-08-11 22:43:08,706 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241202062812/https://www.seattletimes.com/tag/inside-the-times/
+2025-08-11 22:43:37,899 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241202140236/http://jobs.seattletimes.com/
+2025-08-11 22:44:06,458 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241128002557/https://www.seattletimes.com/business/
+2025-08-11 22:45:22,492 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241128191735/https://www.seattletimes.com/seattle-news/eastside/
+2025-08-11 22:45:41,572 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241128191735/https://www.seattletimes.com/seattle-news/eastside/
+2025-08-11 22:47:53,568 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241204134423/https://www.seattletimes.com/author/matt-calkins/
+2025-08-11 22:48:12,717 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241204134423/https://www.seattletimes.com/author/matt-calkins/
+2025-08-11 22:48:44,766 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030156/https://www.seattletimes.com/entertainment/movies/
+2025-08-11 22:49:22,673 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030300/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 22:49:41,738 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241201030300/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 22:50:14,039 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241128191649/https://www.seattletimes.com/entertainment/games/
+2025-08-11 22:52:58,301 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241204003104/https://www.seattletimes.com/author/alex-fryer/
+2025-08-11 22:53:42,545 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241203014454/https://www.seattletimes.com/author/gene-balk-fyi-guy/
+2025-08-11 22:54:37,040 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241203045856/https://www.seattletimes.com/explore/nwhomes/
+2025-08-11 22:55:05,115 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241203083737/https://classifieds.seattletimes.com/
+2025-08-11 22:55:58,321 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241203123206/https://company.seattletimes.com/store/
+2025-08-11 22:57:58,491 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 22:58:06,408 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 22:58:21,407 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 22:58:36,821 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 22:58:44,321 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241201030142/https://www.seattletimes.com/type/link/
+2025-08-11 22:59:21,748 - SimpleSeattleTimesScraper - WARNING - No content extracted from http://web.archive.org/web/20241102080816/http://web.archive.org/screenshot/https://www.seattletimes.com/seattle-news/
+2025-08-11 22:59:40,087 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241102081258/https://www.seattletimes.com/
+2025-08-11 23:01:43,565 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241101211947/https://www.seattletimes.com/business/
+2025-08-11 23:02:02,642 - urllib3.connectionpool - WARNING - Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241101211947/https://www.seattletimes.com/business/
+2025-08-11 23:03:11,551 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241029070254/https://www.seattletimes.com/sports/uw-huskies/
+2025-08-11 23:04:23,810 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241029071508/https://www.seattletimes.com/entertainment/theater/
+2025-08-11 23:05:30,805 - urllib3.connectionpool - WARNING - Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'ReadTimeoutError("HTTPConnectionPool(host='web.archive.org', port=80): Read timed out. (read timeout=15)")': /web/20241029071426/https://www.seattletimes.com/life/pets/
+2025-08-11 23:05:59,125 - __main__ - INFO - SimpleSeattleTimesScraper returned 200 articles
+2025-08-11 23:05:59,338 - __main__ - INFO - Removed 163 duplicates
+2025-08-11 23:05:59,440 - __main__ - INFO - Saved 314 articles to seattle_news_20250811_230559.csv
+2025-08-11 23:05:59,445 - __main__ - INFO - Creating master database from 10 CSV files
+2025-08-11 23:05:59,938 - __main__ - INFO - Master database: 627 unique articles (3049 duplicates removed)
+2025-08-11 23:05:59,938 - __main__ - INFO - Saved to seattle_news_master_20250811_230559.csv

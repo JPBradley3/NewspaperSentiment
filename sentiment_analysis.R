@@ -40,18 +40,37 @@ news_clean <- news_data %>%
   ) %>%
   filter(nchar(text) > 50)
 
-# Get sentiment scores
-sentiment_scores <- news_clean %>%
+# Get sentiment scores using AFINN and Bing lexicons
+all_articles_sentiment <- news_clean %>%
+  mutate(article_id = row_number()) %>%
   unnest_tokens(word, text) %>%
   anti_join(stop_words, by = "word") %>%
-  inner_join(get_sentiments("afinn"), by = "word") %>%
-  group_by(source, url, title) %>%
+  left_join(get_sentiments("afinn"), by = "word") %>%
+  left_join(get_sentiments("bing"), by = "word", suffix = c("", "_bing")) %>%
+  group_by(article_id, source, url, title) %>%
   summarise(
-    sentiment_score = sum(value),
-    word_count = n(),
-    avg_sentiment = sentiment_score / word_count,
+    # AFINN scores (-5 to +5)
+    afinn_score = sum(value, na.rm = TRUE),
+    afinn_words = sum(!is.na(value)),
+    avg_afinn = ifelse(afinn_words > 0, afinn_score / afinn_words, 0),
+    
+    # Bing sentiment (positive/negative)
+    positive_words = sum(sentiment_bing == "positive", na.rm = TRUE),
+    negative_words = sum(sentiment_bing == "negative", na.rm = TRUE),
+    bing_score = positive_words - negative_words,
+    
+    total_words = n(),
+    
+    # Primary sentiment (AFINN for compatibility)
+    sentiment_score = afinn_score,
+    word_count = afinn_words,
+    avg_sentiment = avg_afinn,
     .groups = "drop"
   )
+
+# Keep original sentiment_scores for compatibility
+sentiment_scores <- all_articles_sentiment %>%
+  filter(word_count > 0)
 
 # Source sentiment
 source_sentiment <- sentiment_scores %>%
@@ -69,9 +88,7 @@ source_sentiment_plot <- ggplot(source_sentiment, aes(x = reorder(source, avg_se
   theme_minimal()
 
 print(source_sentiment_plot)
-png("source_sentiment_plot.png", width = 1000, height = 600)
-print(source_sentiment_plot)
-dev.off()
+ggsave("source_sentiment_plot.png", source_sentiment_plot, width = 10, height = 6)
 
 # Define all candidates including 2025 mayoral candidates
 candidates <- c("harrell", "wilson", "armstrong", "bliss", "mallahan", "molloy", "whelan", "willoughby", "savage",
@@ -114,13 +131,11 @@ if (nrow(candidate_sentiment) > 0) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
   print(candidate_heatmap)
-  png("candidate_sentiment_heatmap.png", width = 1200, height = 600)
-  print(candidate_heatmap)
-  dev.off()
+  ggsave("candidate_sentiment_heatmap.png", candidate_heatmap, width = 12, height = 6)
 }
 
-# Candidate timeline
-candidate_timeline_data <- sentiment_scores %>%
+# Candidate timeline using ALL articles
+candidate_timeline_data <- all_articles_sentiment %>%
   left_join(news_data %>% select(url, matched_keywords), by = "url") %>%
   mutate(
     candidate = case_when(
@@ -139,6 +154,8 @@ candidate_timeline_data <- sentiment_scores %>%
   ) %>%
   filter(!is.na(candidate))
 
+cat("Timeline using", nrow(candidate_timeline_data), "candidate articles out of", nrow(all_articles_sentiment), "total articles\n")
+
 if (nrow(candidate_timeline_data) > 0) {
   candidate_timeline <- ggplot(candidate_timeline_data, aes(x = article_order, y = avg_sentiment, color = candidate)) +
     geom_point(alpha = 0.7) +
@@ -148,12 +165,7 @@ if (nrow(candidate_timeline_data) > 0) {
     theme_minimal()
   
   print(candidate_timeline)
-  
-  # Force save using png method
-  png("candidate_sentiment_timeline.png", width = 1200, height = 600)
-  print(candidate_timeline)
-  dev.off()
-  cat("Timeline saved to candidate_sentiment_timeline.png\n")
+  ggsave("candidate_sentiment_timeline.png", candidate_timeline, width = 12, height = 6)
   
   # Also save timeline data
   write.csv(candidate_timeline_data, "candidate_timeline_data.csv", row.names = FALSE)
@@ -191,48 +203,47 @@ thematic_sentiment <- sentiment_scores %>%
   )
 
 if (nrow(thematic_sentiment) > 0) {
-  thematic_plot <- ggplot(thematic_sentiment, aes(x = avg_sentiment, y = reorder(category, avg_sentiment), fill = ifelse(avg_sentiment > 0, "Positive", "Negative"))) +
+  thematic_plot <- ggplot(thematic_sentiment, aes(x = avg_sentiment, y = reorder(category, avg_sentiment), fill = avg_sentiment > 0)) +
     geom_col() +
     facet_wrap(~source, scales = "free") +
-    scale_fill_manual(values = c("Negative" = "red", "Positive" = "blue"), guide = "none") +
-    labs(title = "Sentiment by Theme and Source", x = "Average Sentiment", y = "Category") +
+    scale_fill_manual(values = c("red", "blue"), guide = "none") +
+    labs(title = "Sentiment by Theme and Source", x = "Average Sentiment", y = "Theme") +
     theme_minimal()
   
   print(thematic_plot)
   ggsave("thematic_sentiment_plot.png", thematic_plot, width = 12, height = 8)
 }
 
+# Multi-lexicon comparison plot
+sentiment_comparison <- all_articles_sentiment %>%
+  filter(word_count > 0) %>%
+  group_by(source) %>%
+  summarise(
+    AFINN = mean(avg_afinn),
+    Bing = mean(bing_score),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(cols = c(AFINN, Bing), names_to = "Lexicon", values_to = "Sentiment")
+
+if (nrow(sentiment_comparison) > 0) {
+  comparison_plot <- ggplot(sentiment_comparison, aes(x = reorder(source, Sentiment), y = Sentiment, fill = Lexicon)) +
+    geom_col(position = "dodge") +
+    coord_flip() +
+    labs(title = "Sentiment Comparison: AFINN vs Bing", x = "News Source", y = "Average Sentiment") +
+    theme_minimal()
+  
+  print(comparison_plot)
+  ggsave("sentiment_comparison.png", comparison_plot, width = 12, height = 6)
+}
+
 # Save all results
 write.csv(source_sentiment, "sentiment_by_source.csv", row.names = FALSE)
-write.csv(sentiment_scores, "article_sentiments.csv", row.names = FALSE)
+write.csv(all_articles_sentiment, "article_sentiments.csv", row.names = FALSE)
 if (exists("candidate_sentiment")) {
   write.csv(candidate_sentiment, "candidate_sentiment_by_source.csv", row.names = FALSE)
 }
 if (exists("thematic_sentiment")) {
   write.csv(thematic_sentiment, "sentiment_by_theme_and_source.csv", row.names = FALSE)
-}
-
-# Create master database from all CSV files if not using one already
-if (length(master_files) == 0 && length(regular_files) > 1) {
-  cat("Creating master database from", length(regular_files), "files...\n")
-  
-  all_files_data <- map_dfr(regular_files, ~ {
-    df <- read.csv(.x, stringsAsFactors = FALSE)
-    df$source_file <- .x
-    df
-  })
-  
-  # Remove duplicates
-  initial_count <- nrow(all_files_data)
-  all_files_data <- all_files_data %>% distinct(url, .keep_all = TRUE)
-  
-  # Save master database
-  timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-  master_filename <- paste0("seattle_news_master_", timestamp, ".csv")
-  write.csv(all_files_data, master_filename, row.names = FALSE)
-  
-  cat("Master database saved:", master_filename, "\n")
-  cat("Total articles:", nrow(all_files_data), "(removed", initial_count - nrow(all_files_data), "duplicates)\n")
 }
 
 cat("Analysis complete - all files saved\n")

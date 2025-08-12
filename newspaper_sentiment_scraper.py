@@ -365,7 +365,7 @@ class SeattleTimesScraper(BaseScraper):
                 if href.startswith('/'):
                     href = "https://www.seattletimes.com" + href
                 
-                # More flexible matching - look for article patterns from past year
+                # More flexible matching - look for article patterns from 2024 onwards
                 if ('seattletimes.com' in href and 
                     ('seattle-news' in href or 'politics' in href or 'local' in href) and
                     any(year in href for year in ['/2025/', '/2024/']) and
@@ -447,7 +447,7 @@ class StrangerScraper(BaseScraper):
             links = soup.find_all('a', href=True)
             for a in links:
                 href = a['href']
-                # Accept all Stranger articles from 2024/2025 with enough path segments
+                # Accept Stranger articles from 2024 onwards
                 if any(year in href for year in ['/2025/', '/2024/']):
                     if not href.startswith('http'):
                         href = urljoin('https://www.thestranger.com', href)
@@ -483,8 +483,8 @@ class CHSScraper(BaseScraper):
 
     def _find_chs_articles(self, base_url: str) -> List[str]:
         article_links = set()
-        # Add pagination to scrape multiple pages - increased depth significantly
-        for page_num in range(1, 11):  # Scrape first 10 pages
+        # Add pagination to scrape multiple pages
+        for page_num in range(1, self.config.max_pages + 1):
             if page_num == 1:
                 url = base_url
             else:
@@ -514,9 +514,7 @@ class CHSScraper(BaseScraper):
                 
                 self.logger.info(f"Found {found_on_page} new article links on CHS page {page_num}")
                 
-                if len(article_links) >= self.config.max_articles_per_source:
-                    self.logger.info(f"Reached max articles ({self.config.max_articles_per_source}) for CHS. Stopping.")
-                    break
+                # Continue collecting links without early stopping
 
                 # If the specific selector finds no links, it's a good sign we're at the end.
                 if found_on_page == 0 and page_num > 1:
@@ -603,17 +601,28 @@ class WebScrapingScraper(BaseScraper):
             article_urls = set()
             # Special handling for KUOW API, which is more reliable than parsing JS-heavy pages
             if site['name'] == 'KUOW':
-                api_url = "https://www.kuow.org/api/v1/news?page=1"
-                self.logger.info(f"Using API for KUOW: {api_url}")
-                response = self.session.get(api_url, timeout=self.config.request_timeout)
-                response.raise_for_status()
-                api_data = response.json()
-                
-                for story in api_data.get('stories', []):
-                    permalink = story.get('permalink')
-                    if permalink:
-                        full_url = urljoin("https://www.kuow.org", permalink)
-                        article_urls.add(full_url)
+                # Use multiple pages for KUOW API
+                for page in range(1, self.config.max_pages + 1):
+                    api_url = f"https://www.kuow.org/api/v1/news?page={page}"
+                    try:
+                        response = self.session.get(api_url, timeout=self.config.request_timeout)
+                        response.raise_for_status()
+                        api_data = response.json()
+                        
+                        stories = api_data.get('stories', [])
+                        if not stories:
+                            break
+                            
+                        for story in stories:
+                            permalink = story.get('permalink')
+                            if permalink:
+                                full_url = urljoin("https://www.kuow.org", permalink)
+                                article_urls.add(full_url)
+                        
+                        time.sleep(self.config.delay_between_requests)
+                    except Exception as e:
+                        self.logger.warning(f"KUOW API page {page} failed: {e}")
+                        break
             else:
                 # Get the main page for other sites
                 response = self.session.get(site['url'], timeout=self.config.request_timeout)
@@ -715,9 +724,9 @@ class RSSFeedScraper(BaseScraper):
                     publish_date = entry.get('published', '')
                     url = entry.get('link', '')
 
-                    # Remove strict date filtering to get more articles
-                    # if publish_date and not any(year in publish_date for year in ['2024', '2025']):
-                    #     continue
+                    # Filter for articles from 2024 onwards
+                    if publish_date and not any(year in publish_date for year in ['2024', '2025']):
+                        continue
                     if url in seen_urls:
                         continue
                     article_data = {
@@ -786,9 +795,9 @@ class SimpleSeattleTimesScraper(BaseScraper):
             for entry in feed.entries:
                 publish_date = entry.get('published', '')
                 
-                # Remove strict date filtering
-                # if publish_date and not any(year in publish_date for year in ['2024', '2025']):
-                #     continue
+                # Filter for articles from 2024 onwards
+                if publish_date and not any(year in publish_date for year in ['2024', '2025']):
+                    continue
                 
                 article_data = {
                     'title': entry.get('title', ''),
